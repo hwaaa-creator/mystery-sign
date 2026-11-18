@@ -259,12 +259,37 @@ button.slot { font-size: clamp(12px, 4.2vw, 1em); }
 .learn b { display: block; color: var(--brass); font-size: 12px; margin-bottom: 2px; }
 
 /* 아이템 */
-.items-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-.item-card { text-align: left; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; display: flex; flex-direction: column; gap: 4px; }
-.item-card b { font-size: 15px; color: var(--paper); }
-.item-card span { font-size: 12px; line-height: 1.45; color: var(--muted); }
-.item-card.on { border-color: var(--brass); box-shadow: 0 0 0 2px rgba(214,168,78,.3); }
-.item-card.on b { color: var(--brass); }
+.pick { gap: 14px; padding-bottom: 150px; }
+.eyebrow { margin: 0; font-size: 12px; font-weight: 700; letter-spacing: .12em; color: var(--brass); }
+.opp-pill { align-self: flex-start; display: inline-flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; }
+.opp-pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--muted); animation: pulse 1.2s ease-in-out infinite; }
+.opp-pill.done { color: var(--good); border-color: var(--good); }
+.opp-pill.done i { background: var(--good); animation: none; }
+.igrid, .mine-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.icard {
+  position: relative; text-align: left; display: flex; flex-direction: column; gap: 6px;
+  background: linear-gradient(160deg, rgba(255,255,255,.04), rgba(255,255,255,0) 60%), var(--panel);
+  border: 1px solid var(--line); border-radius: 16px; padding: 14px 12px 14px;
+  transition: transform .12s ease, border-color .12s ease, box-shadow .12s ease;
+}
+.icard:active { transform: scale(.97); }
+.icard-top { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.iglyph { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; color: var(--tone); background: color-mix(in srgb, var(--tone) 14%, transparent); border: 1px solid color-mix(in srgb, var(--tone) 40%, transparent); }
+.itag { font-size: 11px; font-weight: 700; color: var(--tone); margin-left: auto; }
+.inum { position: absolute; top: -8px; right: -6px; width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-family: var(--mono); font-size: 13px; font-weight: 800; color: var(--ink); background: var(--brass); box-shadow: 0 2px 8px rgba(0,0,0,.4); }
+.icard b { font-size: 17px; color: var(--paper); letter-spacing: -.01em; }
+.idesc { font-size: 12.5px; line-height: 1.5; color: var(--muted); }
+.icard.on { border-color: var(--brass); box-shadow: 0 0 0 2px rgba(214,168,78,.35), 0 8px 24px rgba(0,0,0,.35); transform: translateY(-2px); }
+.icard.on b { color: var(--brass); }
+.tray {
+  position: fixed; left: 50%; bottom: 0; transform: translateX(-50%); width: min(460px, 100%); z-index: 5;
+  padding: 12px 16px calc(env(safe-area-inset-bottom) + 14px); display: flex; flex-direction: column; gap: 10px;
+  background: linear-gradient(to top, var(--ink) 75%, rgba(17,19,26,0));
+}
+.tray-slots { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.slot-chip { display: flex; align-items: center; justify-content: center; gap: 6px; height: 40px; border-radius: 12px; border: 1.5px dashed var(--line); font-size: 13px; color: var(--muted); }
+.slot-chip.on { border: 1.5px solid var(--brass); color: var(--brass); background: rgba(214,168,78,.08); }
+.slot-chip.on b { color: var(--paper); font-size: 14px; }
 .cta:disabled { opacity: .4; cursor: default; }
 .tool.item.armed { background: var(--brass); color: var(--ink); border-color: var(--brass); }
 .tool.item.armed small { color: var(--ink); }
@@ -280,7 +305,7 @@ button.slot { font-size: clamp(12px, 4.2vw, 1em); }
 .chip .iteml { flex-basis: 100%; font-size: 11px; line-height: 1.4; color: var(--muted); white-space: normal; }
 .effects span.opp { background: transparent; color: var(--bad); border: 1px solid var(--bad); }
 .toast {
-  position: fixed; left: 50%; top: calc(env(safe-area-inset-top) + 12px); transform: translateX(-50%);
+  position: fixed; left: 0; right: 0; margin: 0 auto; top: calc(env(safe-area-inset-top) + 12px);
   width: min(430px, calc(100% - 32px)); z-index: 20; display: flex; flex-direction: column; gap: 3px;
   background: var(--panel); border: 1.5px solid var(--bad); border-radius: 14px; padding: 12px 14px;
   box-shadow: 0 10px 30px rgba(0,0,0,.45); animation: drop .3s ease-out;
@@ -294,6 +319,19 @@ button.slot { font-size: clamp(12px, 4.2vw, 1em); }
 .turn .clock.urgent { color: var(--bad); }
 .turn .clockbar { position: absolute; left: 10px; bottom: 0; height: 3px; width: 0; background: var(--brass); border-radius: 2px; transition: width .5s linear; max-width: calc(100% - 10px); }
 .turn .clockbar.urgent { background: var(--bad); }
+
+/* 눈에 띄는 알림 */
+.eq.new { animation: clueflash 2.2s ease-out; border-radius: 8px; }
+@keyframes clueflash { 0% { background: rgba(214,168,78,.45); transform: scale(1.03); } 40% { background: rgba(214,168,78,.25); transform: none; } 100% { background: transparent; } }
+.toast.t-clue { border-color: var(--brass); }
+.toast.t-clue b { color: var(--brass); font-family: var(--mono); }
+.toast.t-turn { border: 2px solid var(--good); background: color-mix(in srgb, var(--good) 18%, var(--panel)); padding: 16px; animation: drop .3s ease-out, glow 1.2s ease-in-out 2; }
+.toast.t-turn b { font-size: 20px; color: var(--good); }
+.toast.t-turn span { color: var(--paper); font-size: 14px; }
+@keyframes glow { 50% { box-shadow: 0 0 0 6px rgba(99,194,148,.25), 0 10px 30px rgba(0,0,0,.45); } }
+.lockline.go { font-size: 15px; font-weight: 700; color: var(--good); border: 1.5px solid var(--good); background: color-mix(in srgb, var(--good) 12%, transparent); border-radius: 12px; padding: 10px 12px; animation: glow 1.2s ease-in-out 3; }
+.lockline.go b { color: var(--paper); }
+button.slot.chance { border-color: var(--good); box-shadow: 0 0 0 3px rgba(99,194,148,.3); animation: glow 1.2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -831,13 +869,24 @@ const NODB = "Firebase에 연결하지 못했어요. index.html의 FB_CONFIG 값
 const validN = n => Number.isInteger(n) && n >= 1 && n <= 999999999;
 
 const ITEMS = {
-  shield: { name: "무감점", desc: "이번 라운드 동안 오답을 내도 점수가 깎이지 않아요." },
-  double: { name: "DOUBLE", desc: "이번 라운드에 내가 맞히면 점수 2배. 대신 오답 감점도 2배예요." },
-  retry: { name: "재도전", desc: "오답을 낸 직후 기회를 넘기지 않고 바로 한 번 더 답해요." },
-  solo: { name: "단서 독점", desc: "다음 단서 하나의 앞 숫자와 뒷 숫자를 내가 모두 정해요." },
-  secret: { name: "SECRET", desc: "이번 라운드에 사용 뒤 나오는 단서의 결과를 상대는 볼 수 없어요." },
-  hint: { name: "귀띔", desc: "이번 문제 규칙에 대한 힌트 한 줄을 나만 봐요." },
+  shield: { name: "무감점", tag: "방어", desc: "이번 라운드 동안 오답을 내도 점수가 깎이지 않아요." },
+  retry: { name: "재도전", tag: "방어", desc: "오답을 낸 직후 기회를 넘기지 않고 바로 한 번 더 답해요." },
+  double: { name: "DOUBLE", tag: "공격", desc: "이번 라운드에 맞히면 점수 2배. 대신 오답 감점도 2배예요." },
+  solo: { name: "단서 독점", tag: "단서", desc: "다음 단서 하나의 앞 숫자와 뒷 숫자를 내가 모두 정해요." },
+  secret: { name: "SECRET", tag: "단서", desc: "다음 단서에 내가 넣는 숫자를 상대는 볼 수 없어요. 결과는 둘 다 봐요." },
+  hint: { name: "귀띔", tag: "정보", desc: "이번 문제 규칙에 대한 힌트 한 줄을 나만 봐요." },
 };
+const svgI = d => `<svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`;
+const ITEM_ICON = {
+  shield: svgI('<path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6z"/><path d="M9 12l2 2 4-4"/>'),
+  double: svgI('<path d="M5 8l6 8M11 8l-6 8"/><path d="M14 9a3 3 0 0 1 6 0c0 2-6 4-6 7h6"/>'),
+  retry: svgI('<path d="M20 12a8 8 0 1 1-2.3-5.6"/><path d="M20 4v5h-5"/>'),
+  solo: svgI('<rect x="3" y="7" width="7" height="10" rx="2"/><rect x="14" y="7" width="7" height="10" rx="2"/><path d="M10 12h4"/>'),
+  secret: svgI('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+  hint: svgI('<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>'),
+};
+const TAG_TONE = { "방어": "#63c294", "공격": "#e36a5b", "단서": "#d6a84e", "정보": "#7fa7e0" };
+
 const ITEM_PICK = 2;
 const CLUE_LIMIT_MS = 60000;    // 둘이서: 단서 숫자를 내는 제한 시간
 const TIMEOUT_GRACE_MS = 3000;  // 상대 화면이 대신 시간 초과를 처리하기까지 여유
@@ -845,13 +894,22 @@ const hashN = s => { let x = 0; for (const ch of String(s)) x = (x * 31 + ch.cha
 
 const other_of = (st, p) => (st.players[0] === p ? st.players[1] : st.players[0]);
 
+// 단서: [앞, 뒤, 결과, 앞 낸 사람, 뒤 낸 사람, {a: 앞 숫자를 숨긴 사람, b: 뒤 숫자를 숨긴 사람}]
+function makeClue(r, a, b, bBy) {
+  const aBy = r.pendingA.by;
+  const hide = { a: r.pendingA.secret ? aBy : null, b: r.secretOn[bBy] ? bBy : null };
+  if (hide.a) delete r.secretOn[hide.a];   // SECRET은 단서 하나에만 적용
+  if (hide.b) delete r.secretOn[hide.b];
+  return [a, b, calc(ruleById(r.ruleId), a, b), aBy, bBy, hide];
+}
+
 function reduce(game, moves) {
   const host = game.host;
   const st = {
     players: [host, null], scores: {}, idx: 0, ended: false, rematch: null, names: { [host]: cleanName(game.hostName) },
     items: {}, ready: false,
     rounds: (game.rounds || []).map(r => ({ ...r, clues: [], pendingA: null, wrong: {}, result: null, winner: null, points: 0, skip: [], log: [],
-      lock: null, shield: {}, double: {}, hint: {}, secret: [], solo: null, turnT: 0 })),
+      lock: null, shield: {}, double: {}, hint: {}, secretOn: {}, solo: null, turnT: 0 })),
   };
   st.scores[host] = 0;
   st.items[host] = { chosen: null, used: {} };
@@ -892,19 +950,19 @@ function reduce(game, moves) {
       if (id === "shield") r.shield[by] = true;
       else if (id === "double") r.double[by] = true;
       else if (id === "hint") r.hint[by] = true;
-      else if (id === "secret") { if (!r.secret.includes(by)) r.secret.push(by); }
+      else if (id === "secret") r.secretOn[by] = true;
       else if (id === "solo") { r.solo = by; r.turnT = Number(m.t) || 0; }
       else if (id === "retry") r.lock = null;
       r.log.push({ kind: "item", by, item: id });
     } else if (m.type === "a") {
       const who = r.solo || aP;
-      if (by === who && r.pendingA === null && validN(m.n)) { r.pendingA = { n: m.n, by }; r.turnT = Number(m.t) || 0; }
+      if (by === who && r.pendingA === null && validN(m.n)) { r.pendingA = { n: m.n, by, secret: !!r.secretOn[by] }; r.turnT = Number(m.t) || 0; }
     } else if (m.type === "b") {
       if (r.pendingA === null || !validN(m.n)) continue;
       if (r.solo ? by !== r.solo : by === r.pendingA.by) continue;
       const a = r.pendingA.n, b = m.n;
       if (badPair(r, a, b) || r.clues.some(c => c[0] === a && c[1] === b)) continue;
-      r.clues.push([a, b, calc(ruleById(r.ruleId), a, b), r.pendingA.by, by, r.secret.slice()]);
+      r.clues.push(makeClue(r, a, b, by));
       r.pendingA = null;
       r.solo = null;
       r.lock = null;            // 새 단서가 나오면 둘 다 다시 답할 수 있음
@@ -917,9 +975,10 @@ function reduce(game, moves) {
       let n = hashN(m.id + ":" + r.clues.length);
       if (slotNow === "b") { let g = 0; while (g++ < 99 && (badPair(r, r.pendingA.n, n) || r.clues.some(c => c[0] === r.pendingA.n && c[1] === n))) n = (n % 99) + 1; }
       r.log.push({ kind: "timeout", by: owner, n });
-      if (slotNow === "a") { r.pendingA = { n, by: owner }; r.turnT = Number(m.t) || 0; }
+      r.log[r.log.length - 1].secret = !!r.secretOn[owner];
+      if (slotNow === "a") { r.pendingA = { n, by: owner, secret: !!r.secretOn[owner] }; r.turnT = Number(m.t) || 0; }
       else {
-        r.clues.push([r.pendingA.n, n, calc(ruleById(r.ruleId), r.pendingA.n, n), r.pendingA.by, owner, r.secret.slice()]);
+        r.clues.push(makeClue(r, r.pendingA.n, n, owner));
         r.pendingA = null; r.solo = null; r.lock = null; r.turnT = Number(m.t) || 0;
       }
     } else if (m.type === "ans") {
@@ -951,25 +1010,44 @@ function renderItemPick(head, wire, spectator) {
   const opp = st.players[0] === M.me ? st.players[1] : st.players[0];
   const oppDone = !!(st.items[opp] && st.items[opp].chosen);
   if (!M.pick) M.pick = [];
+  const oppPill = `<span class="opp-pill${oppDone ? " done" : ""}"><i></i>${esc(nameOf(opp))} · ${oppDone ? "선택 완료" : "고르는 중"}</span>`;
   if (spectator) {
     app.innerHTML = `${head()}<section class="hero"><h2 class="title-sm">아이템 고르는 중</h2><p class="lede">두 사람이 아이템을 고르면 시작해요.</p></section>`;
     wire(); return;
   }
+  const card = (id, small) => {
+    const it = ITEMS[id], n = M.pick.indexOf(id);
+    return `<button class="icard${n >= 0 ? " on" : ""}${small ? " small" : ""}" ${small ? "tabindex=\"-1\"" : `data-item="${id}"`} aria-pressed="${n >= 0}" style="--tone:${TAG_TONE[it.tag]}">
+      <span class="icard-top"><span class="iglyph">${ITEM_ICON[id]}</span><span class="itag">${esc(it.tag)}</span>${n >= 0 && !small ? `<span class="inum">${n + 1}</span>` : ""}</span>
+      <b>${esc(it.name)}</b>
+      ${small ? "" : `<span class="idesc">${esc(it.desc)}</span>`}
+    </button>`;
+  };
   if (mine.chosen) {
-    app.innerHTML = `${head()}<section class="hero wait">
-      <h2 class="title-sm">${oppDone ? "곧 시작해요" : "상대가 아이템을 고르는 중"}</h2>
-      <p class="lede">내 아이템: <b>${mine.chosen.map(id => esc(ITEMS[id].name)).join(", ")}</b><br>상대가 고른 아이템은 쓰기 전까지 보이지 않아요.</p>
+    M.pick = mine.chosen.slice();
+    app.innerHTML = `${head()}<section class="hero pick">
+      <p class="eyebrow">게임 시작 전</p>
+      <h2 class="title-sm">${oppDone ? "곧 시작해요" : "상대를 기다리는 중"}</h2>
+      ${oppPill}
+      <div class="mine-pair">${mine.chosen.map(id => card(id, false)).join("")}</div>
+      <p class="lede">상대가 고른 아이템은 쓰기 전까지 보이지 않아요.</p>
       <div class="pulse" aria-hidden="true"><i></i><i></i><i></i></div>
     </section>`;
     wire(); return;
   }
-  app.innerHTML = `${head()}<section class="hero" style="padding-top:2vh">
-    <h2 class="title-sm">아이템 ${ITEM_PICK}개 고르기</h2>
-    <p class="lede">게임 내내 쓸 수 있는 나만의 아이템이에요. 아이템마다 한 번씩 쓸 수 있어요. ${oppDone ? "상대는 이미 골랐어요." : ""}</p>
-    <div class="items-grid">
-      ${Object.entries(ITEMS).map(([id, it]) => `<button class="item-card${M.pick.includes(id) ? " on" : ""}" data-item="${id}" aria-pressed="${M.pick.includes(id)}"><b>${esc(it.name)}</b><span>${esc(it.desc)}</span></button>`).join("")}
+  const slots = [0, 1].map(i => M.pick[i]
+    ? `<span class="slot-chip on">${ITEM_ICON[M.pick[i]]}<b>${esc(ITEMS[M.pick[i]].name)}</b></span>`
+    : `<span class="slot-chip">${i + 1}번 아이템</span>`).join("");
+  app.innerHTML = `${head()}<section class="hero pick">
+    <p class="eyebrow">게임 시작 전 · 아이템 선택</p>
+    <h2 class="title-sm">나만의 아이템 ${ITEM_PICK}개</h2>
+    <p class="lede">게임 내내 가지고 있다가 원하는 라운드에 한 번씩 쓸 수 있어요. 효과는 쓴 사람에게만 적용돼요.</p>
+    ${oppPill}
+    <div class="igrid">${Object.keys(ITEMS).map(id => card(id, false)).join("")}</div>
+    <div class="tray">
+      <div class="tray-slots">${slots}</div>
+      <button class="cta" id="pick-done" ${M.pick.length === ITEM_PICK && !M.busy ? "" : "disabled"}>${M.pick.length === ITEM_PICK ? "이 2개로 준비 완료" : `${ITEM_PICK - M.pick.length}개 더 골라 주세요`}</button>
     </div>
-    <button class="cta" id="pick-done" ${M.pick.length === ITEM_PICK && !M.busy ? "" : "disabled"}>${M.pick.length === ITEM_PICK ? "이 " + ITEM_PICK + "개로 시작" : `${M.pick.length} / ${ITEM_PICK}개 선택`}</button>
   </section>`;
   wire();
   app.querySelectorAll("[data-item]").forEach(b => b.onclick = () => {
@@ -1097,8 +1175,10 @@ function leaveGame() { closeGame(); clearHash(); S = { v: 2, phase: "start" }; m
 
 async function update() {
   if (!M) return;
+  const prevSt = M.st;
   M.st = M.game && Array.isArray(M.game.rounds) ? reduce(M.game, M.moves) : null;
   const st = M.st;
+  if (prevSt && st && M.loaded) detectEvents(prevSt, st);
   if (st && !st.players[1] && M.me !== M.game.host && M.gDef && M.mDef && !M.joinSent) {
     M.joinSent = true;
     send("join", { name: cleanName(readName()) });
@@ -1117,7 +1197,7 @@ async function update() {
       const key = pid + ":" + k;
       if (M.seenItem.has(key)) continue;
       M.seenItem.add(key);
-      if (pid !== M.me && M.loaded) showToast(`${nameOf(pid)}가 아이템을 사용했어요: ${ITEMS[k].name}`, ITEMS[k].desc);
+      if (pid !== M.me && M.loaded) showToast(`${nameOf(pid)}가 아이템을 사용했어요: ${ITEMS[k].name}`, ITEMS[k].desc, "item");
     }
     if (M.mDef) M.loaded = true;
     if (st.idx !== M.lastIdx) { M.lastIdx = st.idx; M.armed = null; M.f.ans = ""; M.active = myClueTurn(st) ? "clue" : "ans"; }
@@ -1226,7 +1306,7 @@ function effects(r, spectator) {
     const on = [];
     if (r.shield[who]) on.push("무감점");
     if (r.double[who]) on.push("DOUBLE");
-    if (r.secret.includes(who)) on.push("SECRET");
+    if (r.secretOn[who]) on.push("SECRET 대기");
     if (r.solo === who) on.push("단서 독점");
     if (r.hint[who]) on.push("귀띔");
     if (r.log.some(l => l.kind === "item" && l.item === "retry" && l.by === who)) on.push("재도전");
@@ -1259,14 +1339,41 @@ function clueTick() {
 }
 setInterval(clueTick, 500);
 
-function showToast(title, sub) {
+function showToast(title, sub, kind = "item", ms = 4500) {
   if (!M) return;
-  M.toast = { title, sub };
+  M.toast = { title, sub, kind };
   clearTimeout(M.toastTimer);
   const mine = M;
-  M.toastTimer = setTimeout(() => { if (M === mine) { M.toast = null; render(); } }, 4500);
+  M.toastTimer = setTimeout(() => { if (M === mine) { M.toast = null; render(); } }, ms);
 }
-const toastHtml = () => M && M.toast ? `<div class="toast" role="status"><b>${esc(M.toast.title)}</b><span>${esc(M.toast.sub)}</span></div>` : "";
+const toastHtml = () => M && M.toast ? `<div class="toast t-${M.toast.kind || "item"}" role="status"><b>${esc(M.toast.title)}</b>${M.toast.sub ? `<span>${esc(M.toast.sub)}</span>` : ""}</div>` : "";
+
+// 상대의 단서 숫자, 새 단서, 오답(답할 차례 넘어옴)을 눈에 띄게 알림
+function detectEvents(prev, st) {
+  if (!st.ready || st.idx !== prev.idx || !st.players.includes(M.me)) return;
+  const r = st.rounds[st.idx], pr = prev.rounds[st.idx];
+  if (!r || !pr || r.result) return;
+  const opp = other_of(st, M.me), on = nameOf(opp);
+  let toast = null;
+  if (r.clues.length > pr.clues.length) {
+    const c = r.clues[r.clues.length - 1];
+    const hd = c[5] || {};
+    const a = hd.a && hd.a !== M.me ? "?" : c[0], b = hd.b && hd.b !== M.me ? "?" : c[1];
+    M.flashClue = r.clues.length - 1;
+    clearTimeout(M.flashTimer); M.flashTimer = setTimeout(() => { if (M) M.flashClue = -1; }, 2500);
+    if (c[4] === opp || c[3] === opp) toast = { t: `새 단서: ${a} ${r.sign} ${b} = ${c[2]}`, s: myClueTurn(st) ? "이제 내가 앞 숫자를 낼 차례예요." : "", k: "clue" };
+  } else if (!pr.pendingA && r.pendingA && r.pendingA.by === opp) {
+    const n = r.pendingA.secret ? "?" : r.pendingA.n;
+    toast = { t: `${on}가 앞 숫자를 냈어요: ${n}`, s: myClueTurn(st) ? "이제 내가 뒷 숫자를 낼 차례예요." : "", k: "clue" };
+  }
+  for (const l of r.log.slice(pr.log.length)) {
+    if (l.kind === "wrong" && l.by === opp) {
+      toast = { t: `${on} 오답! (${l.v})`, s: "이제 내가 답할 차례예요. 정답을 외쳐 보세요!", k: "turn", ms: 5500 };
+      try { navigator.vibrate && navigator.vibrate([120, 60, 120]); } catch (e) {}
+    }
+  }
+  if (toast) showToast(toast.t, toast.s, toast.k, toast.ms || 4000);
+}
 
 function renderMulti() {
   if (!M) return renderStart();
@@ -1331,17 +1438,23 @@ function renderMulti() {
     bCell = `<span class="fixed muted">·</span>`;
     status = aP === M.me ? `내 차례: 단서의 <b>앞 숫자</b>를 내 주세요.${r.solo ? " (단서 독점: 뒷 숫자도 내가 정해요)" : ""}` : `${esc(nameOf(aP))} 차례 · ${r.solo ? "단서 독점으로 두 숫자를 모두 정하는 중…" : "앞 숫자를 고르는 중…"}`;
   } else {
-    aCell = `<span class="fixed">${r.pendingA.n}</span>`;
+    const hideP = r.pendingA.secret && r.pendingA.by !== M.me && !spectator;
+    aCell = `<span class="fixed${hideP ? " muted" : ""}">${hideP ? "?" : r.pendingA.n}</span>`;
     bCell = bP === M.me && !spectator ? slot("clue", "단서 뒷 숫자", M.f.clue, M.active === "clue") : `<span class="fixed wait-dot">…</span>`;
-    status = bP === M.me ? `앞 숫자는 <b>${r.pendingA.n}</b>. 이제 내가 <b>뒷 숫자</b>를 낼 차례예요.` : `${esc(nameOf(bP))} 차례 · 뒷 숫자를 고르는 중…`;
+    status = bP === M.me ? `앞 숫자는 <b>${hideP ? "비밀(SECRET)" : r.pendingA.n}</b>. 이제 내가 <b>뒷 숫자</b>를 낼 차례예요.` : `${esc(nameOf(bP))} 차례 · 뒷 숫자를 고르는 중…`;
   }
   const rows = r.clues.length
-    ? `<ul class="ex">${r.clues.map(c => { const hid = !spectator && c[5] && c[5].length && !c[5].includes(M.me); return eqRow(hid ? [c[0], c[1], "?"] : c, r.sign, false).replace('<li class="eq', `<li class="eq${hid ? " hidden" : c[5] && c[5].length ? " secret" : ""}`); }).join("")}</ul>`
+    ? `<ul class="ex">${r.clues.map(c => {
+        const hd = c[5] && typeof c[5] === "object" && !Array.isArray(c[5]) ? c[5] : {};
+        const hideA = !spectator && hd.a && hd.a !== M.me, hideB = !spectator && hd.b && hd.b !== M.me;
+        const mineSecret = (hd.a && hd.a === M.me) || (hd.b && hd.b === M.me);
+        return eqRow([hideA ? "?" : c[0], hideB ? "?" : c[1], c[2]], r.sign, M.flashClue === r.clues.indexOf(c)).replace('<li class="eq', `<li class="eq${hideA || hideB ? " hidden" : mineSecret ? " secret" : ""}`);
+      }).join("")}</ul>`
     : `<p class="empty-note">아직 단서가 없어요. 한 명이 앞 숫자, 다른 한 명이 뒷 숫자를 내면 단서가 하나 생겨요. 다음 단서에선 역할이 바뀌어요.</p>`;
   const lastLog = r.log.slice(-2).map(l => {
     const who = esc(nameOf(l.by));
     if (l.kind === "wrong") return `<span class="bad">${who} 오답 ${esc(l.v)} (${l.loss ? "−" + l.loss + "점" : "무감점"})</span>`;
-    if (l.kind === "timeout") return `${who} 시간 초과 → 숫자 ${l.n} 자동 입력`;
+    if (l.kind === "timeout") return `${who} 시간 초과 → 숫자 ${l.secret && l.by !== M.me ? "?" : l.n} 자동 입력`;
     if (l.kind === "item") return `${who} 아이템 사용: <b>${esc(ITEMS[l.item] ? ITEMS[l.item].name : "")}</b>`;
     if (l.kind === "skip") return `${who}: 넘어가기에 찬성`;
     return "";
@@ -1367,11 +1480,11 @@ function renderMulti() {
     </div>
     <div class="probe quest">
       <span class="tag">문제</span>
-      <div class="line"><span class="l">${r.q[0]}</span><span class="s big-s">${sgn(r.sign)}</span><span class="l">${r.q[1]}</span><span class="e">=</span>${spectator ? `<span class="fixed muted">?</span>` : r.lock === M.me ? `<span class="fixed muted small">상대 차례</span>` : slot("ans", "정답", M.f.ans, M.active === "ans")}</div>
+      <div class="line"><span class="l">${r.q[0]}</span><span class="s big-s">${sgn(r.sign)}</span><span class="l">${r.q[1]}</span><span class="e">=</span>${spectator ? `<span class="fixed muted">?</span>` : r.lock === M.me ? `<span class="fixed muted small">상대 차례</span>` : r.lock ? slot("ans", "정답", M.f.ans, M.active === "ans").replace('class="slot', 'class="slot chance') : slot("ans", "정답", M.f.ans, M.active === "ans")}</div>
     </div>
   </section>
   <p class="msg ${M.note ? "bad" : ""}" role="status">${M.note ? esc(M.note) : lastLog || (M.busy ? "보내는 중…" : `이번 라운드 내 오답 ${r.wrong[M.me] || 0}번`)}</p>
-  ${!spectator && r.lock ? `<p class="lockline${r.lock === M.me ? " me" : ""}">${r.lock === M.me ? "방금 틀렸어요. 지금은 상대가 답할 차례예요. (새 단서가 나오면 다시 답할 수 있어요)" : `${esc(nameOf(r.lock))}가 틀렸어요. 지금은 내가 답할 차례예요!`}</p>` : ""}
+  ${!spectator && r.lock ? `<p class="lockline${r.lock === M.me ? " me" : " go"}">${r.lock === M.me ? "방금 틀렸어요. 지금은 상대가 답할 차례예요. (새 단서가 나오면 다시 답할 수 있어요)" : `${esc(nameOf(r.lock))} 오답! 지금은 <b>내가 답할 차례</b>예요.`}</p>` : ""}
   ${spectator ? "" : keypad(M.active === "clue" ? (r.pendingA === null ? "앞 숫자 내기" : "뒷 숫자 내기") : "정답 제출")}
   ${spectator ? "" : `<div class="tools">
     ${itemBar(st)}
