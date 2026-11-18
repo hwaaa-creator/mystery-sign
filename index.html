@@ -46,7 +46,7 @@ button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
 .round b { color: var(--paper); font-size: 17px; }
 .score { font-family: var(--mono); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
 .score small { font-family: var(--body); font-weight: 500; font-size: 12px; color: var(--muted); margin-right: 4px; }
-.track { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+.track { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; gap: 4px; }
 .track i { height: 4px; border-radius: 2px; background: var(--line); }
 .track i.ok { background: var(--good); }
 .track i.no { background: var(--bad); }
@@ -333,16 +333,149 @@ button.slot { font-size: clamp(12px, 4.2vw, 1em); }
 .lockline.go b { color: var(--paper); }
 button.slot.chance { border-color: var(--good); box-shadow: 0 0 0 3px rgba(99,194,148,.3); animation: glow 1.2s ease-in-out infinite; }
 
+/* 채팅 */
+body.has-chat .app { padding-bottom: calc(env(safe-area-inset-bottom) + 70px); }
+body.has-chat .tray { bottom: 52px; }
+.chat-strip {
+  position: fixed; left: 0; right: 0; bottom: 0; margin: 0 auto; width: min(460px, 100%); z-index: 9;
+  display: flex; align-items: center; gap: 10px; padding: 12px 16px calc(env(safe-area-inset-bottom) + 12px);
+  background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 16px 16px 0 0;
+  color: var(--brass); text-align: left;
+}
+.chat-preview { flex: 1; min-width: 0; font-size: 14px; color: var(--paper); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.chat-badge { min-width: 22px; height: 22px; padding: 0 6px; border-radius: 999px; background: var(--bad); color: #fff; font-size: 12px; font-weight: 800; display: grid; place-items: center; }
+.chat-wrap { position: fixed; inset: 0; z-index: 30; background: rgba(8,9,13,.6); display: flex; align-items: flex-end; justify-content: center; }
+.chat-wrap[hidden] { display: none; }
+.chat-badge[hidden] { display: none; }
+.chat-sheet {
+  width: min(460px, 100%); height: min(70vh, 560px); display: flex; flex-direction: column; gap: 10px;
+  background: var(--panel); border: 1px solid var(--line); border-bottom: 0; border-radius: 20px 20px 0 0;
+  padding: 14px 14px calc(env(safe-area-inset-bottom) + 12px); animation: up .25s ease-out;
+}
+.chat-head { display: flex; justify-content: space-between; align-items: center; }
+.chat-head b { font-size: 16px; }
+.chat-list { flex: 1; overflow-y: auto; list-style: none; margin: 0; padding: 4px 2px; display: flex; flex-direction: column; gap: 8px; }
+.chat-list li { align-self: flex-start; max-width: 80%; display: flex; flex-direction: column; gap: 2px; }
+.chat-list li .who { font-size: 11px; color: var(--muted); }
+.chat-list li .txt { background: var(--ink); border: 1px solid var(--line); border-radius: 14px 14px 14px 4px; padding: 8px 12px; font-size: 15px; line-height: 1.4; overflow-wrap: anywhere; }
+.chat-list li.me { align-self: flex-end; align-items: flex-end; }
+.chat-list li.me .txt { background: var(--brass); color: var(--ink); border-color: var(--brass); border-radius: 14px 14px 4px 14px; }
+.chat-list li.empty { align-self: center; color: var(--muted); font-size: 13px; }
+.chat-quick { display: flex; gap: 6px; overflow-x: auto; }
+.chat-quick button { flex: none; background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 6px 12px; font-size: 13px; }
+.chat-form { display: grid; grid-template-columns: 1fr auto; gap: 8px; }
+.chat-form input { font: inherit; font-size: 16px; color: var(--paper); background: var(--ink); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; min-width: 0; }
+.chat-form input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
+.chat-form .cta { width: auto; padding: 0 18px; font-size: 15px; }
+.toast.t-chat { border-color: var(--line); }
+.toast.t-chat b { font-size: 15px; font-weight: 500; }
+
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 @media (max-width: 360px) {
   .eq { font-size: 19px; } .question { font-size: 25px; } .hero h1 { font-size: 46px; }
 }
+
+/* ===================== 세련된 마감 (전체 디자인 정리) ===================== */
+:root {
+  --ink: #0d0f15;
+  --panel: #161922;
+  --panel-2: #1c202b;
+  --line: #282d3a;
+  --line-2: #333949;
+  --paper: #efe8da;
+  --muted: #8b90a0;
+  --brass: #d9ad55;
+  --brass-hi: #f0cb7a;
+  --shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 12px 32px -12px rgba(0,0,0,.6);
+}
+body {
+  background-color: var(--ink);
+  background-image:
+    radial-gradient(90% 50% at 50% -8%, rgba(217,173,85,.10) 0%, rgba(217,173,85,0) 60%),
+    radial-gradient(rgba(255,255,255,.035) 1px, transparent 1.2px);
+  background-size: 100% 100%, 22px 22px;
+  background-attachment: fixed;
+}
+::selection { background: rgba(217,173,85,.35); }
+
+/* 상단 */
+.round { padding: 5px 12px; border: 1px solid var(--line); border-radius: 999px; background: rgba(255,255,255,.02); }
+.back { transition: border-color .15s, color .15s; }
+.back:hover { border-color: var(--line-2); color: var(--paper); }
+.track i { height: 5px; border-radius: 3px; transition: background .3s; }
+.track i.now { background: linear-gradient(90deg, var(--brass), var(--brass-hi)); box-shadow: 0 0 10px rgba(217,173,85,.45); }
+
+/* 카드 */
+.card, .chip, .invite, .toggle, .icard {
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  box-shadow: var(--shadow);
+}
+.card { border-radius: 20px; padding: 18px 16px 18px; border-color: var(--line); }
+.meta .level { letter-spacing: .02em; }
+.worth { padding: 3px 9px; border-radius: 999px; background: rgba(255,255,255,.03); border: 1px solid var(--line); }
+.eq { border-bottom: 1px solid rgba(255,255,255,.04); padding: 8px 6px; border-radius: 8px; }
+.eq:last-child { border-bottom: 0; }
+.eq .r { color: var(--brass-hi); }
+.ex { background: rgba(0,0,0,.18); border: 1px solid rgba(255,255,255,.03); border-radius: 14px; padding: 4px 6px; }
+.empty-note { background: rgba(0,0,0,.15); border-style: dashed; }
+.probe .big-s, .question .s { background: radial-gradient(circle at 35% 30%, var(--brass-hi), var(--brass) 70%); box-shadow: 0 4px 14px -4px rgba(217,173,85,.6); }
+button.slot { background: rgba(0,0,0,.25); border-color: var(--line-2); transition: border-color .15s, box-shadow .15s; }
+button.slot.active { box-shadow: 0 0 0 3px rgba(217,173,85,.22); }
+
+/* 키패드 */
+.pad { gap: 9px; }
+.key {
+  background: linear-gradient(180deg, #20242f, #191c25);
+  border-color: var(--line); box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 3px 0 #0a0b10;
+  padding: 14px 0; transition: transform .06s, box-shadow .06s;
+}
+.key:active { transform: translateY(2px); box-shadow: 0 1px 0 rgba(255,255,255,.04) inset, 0 1px 0 #0a0b10; background: #1d212b; }
+.key.go { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 3px 0 #7d6127; }
+.key.go.probe-go { background: linear-gradient(180deg, #20242f, #191c25); box-shadow: 0 1px 0 rgba(255,255,255,.05) inset, 0 3px 0 #0a0b10; }
+.tool { background: rgba(255,255,255,.02); transition: border-color .15s, background .15s; }
+.tool:not(:disabled):hover { border-color: var(--line-2); background: rgba(255,255,255,.04); }
+
+/* 버튼 */
+.cta { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); box-shadow: 0 1px 0 rgba(255,255,255,.35) inset, 0 10px 24px -10px rgba(217,173,85,.7); letter-spacing: .01em; transition: transform .08s, filter .15s; }
+.cta:active { transform: translateY(1px); filter: brightness(.96); }
+.cta.alt { background: rgba(217,173,85,.06); box-shadow: none; }
+.ghost { background: rgba(255,255,255,.02); }
+
+/* 시작 화면 */
+.hero h1 { font-size: 60px; letter-spacing: -.02em; text-shadow: 0 8px 30px rgba(0,0,0,.5); }
+.hero h1 em { background: linear-gradient(180deg, var(--brass-hi), var(--brass)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.demo-card { position: relative; background: rgba(0,0,0,.22); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; box-shadow: var(--shadow); }
+.demo-cap { position: absolute; top: -9px; left: 14px; font-size: 11px; font-weight: 700; letter-spacing: .12em; color: var(--brass); background: var(--ink); padding: 0 6px; }
+.demo span { animation: rise .5s ease-out both; }
+.demo span:nth-child(2) { animation-delay: .12s; } .demo span:nth-child(3) { animation-delay: .24s; }
+@keyframes rise { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.rules li { border-top-color: var(--line); }
+
+/* 결과 시트 */
+.sheet { background: linear-gradient(180deg, var(--panel-2), var(--panel)); box-shadow: 0 -20px 50px -20px rgba(0,0,0,.7); }
+.verdict { display: flex; align-items: center; gap: 12px; }
+.vicon { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; flex: none; }
+.verdict.ok .vicon { background: rgba(99,194,148,.15); color: var(--good); border: 1.5px solid var(--good); }
+.verdict.no .vicon { background: rgba(227,106,91,.12); color: var(--bad); border: 1.5px solid var(--bad); }
+.learn { background: rgba(217,173,85,.07); }
+
+/* 라운드 시작 표시 */
+.splash { position: fixed; inset: 0; z-index: 40; display: grid; place-items: center; pointer-events: none; background: rgba(8,9,13,.55); animation: splash-bg 1.25s ease forwards; }
+.splash-in { text-align: center; display: flex; flex-direction: column; align-items: center; gap: 10px; animation: splash-in 1.25s cubic-bezier(.2,.8,.2,1) forwards; }
+.splash-in small { font-family: var(--mono); font-size: 13px; letter-spacing: .3em; color: var(--muted); }
+.splash-in b { font-family: var(--display); font-weight: 400; font-size: 64px; line-height: 1; color: var(--paper); }
+.splash-in b em { font-style: normal; color: var(--brass); }
+.splash-in .pips span { width: 10px; height: 10px; }
+.splash-in span.lv { font-size: 15px; font-weight: 700; color: var(--brass); }
+@keyframes splash-bg { 0% { opacity: 0; } 15% { opacity: 1; } 75% { opacity: 1; } 100% { opacity: 0; } }
+@keyframes splash-in { 0% { opacity: 0; transform: scale(.92); } 18% { opacity: 1; transform: none; } 75% { opacity: 1; } 100% { opacity: 0; transform: scale(1.04); } }
 </style>
 </head>
 <body>
 <main class="app" id="app"></main>
+<div id="chatroot"></div>
 
 <script id="rules">
 // ===== 규칙 정의 (rules:start) =====
@@ -488,6 +621,54 @@ const RULES = [
     gen: () => [rand(1, 99), rand(1, 99)], f: (a, b) => romanLen(a) + romanLen(b) },
   { id: "countDigit", level: 3, kind: "creative", name: "1부터 A까지 차례로 쓸 때 숫자 (B의 일의 자리)가 나오는 횟수", hint: "1, 2, 3, … 하고 쭉 적어 보세요.",
     gen: () => [rand(10, 60), rand(1, 9)], f: (a, b) => { const d = String(b % 10); let c = 0; for (let n = 1; n <= a; n++) for (const ch of String(n)) if (ch === d) c++; return c; } },
+  // ===== 추가 규칙 (3차) =====
+  { id: "absDiff", level: 1, name: "두 수의 차 (큰 수 − 작은 수)", hint: "순서와 상관없이 결과가 늘 0 이상이에요.",
+    gen: () => { const a = rand(10, 99); let b; do { b = rand(10, 99); } while (b === a); return [a, b]; }, f: (a, b) => Math.abs(a - b) },
+  { id: "sqSum", level: 2, name: "(A + B)²  (더한 뒤 제곱)", hint: "덧셈을 먼저 하고, 그 결과를 한 번 더 활용해요.",
+    gen: () => [rand(2, 12), rand(2, 12)], f: (a, b) => ((BigInt(a) + BigInt(b)) ** 2n).toString() },
+  { id: "quotMod", level: 3, name: "큰 수 ÷ 작은 수의 몫 + 나머지", hint: "나눗셈 결과 두 가지를 모두 써요.",
+    gen: () => { let a, b; do { b = rand(3, 9); a = rand(20, 99); } while (a % b === 0); return [a, b]; },
+    f: (a, b) => { const hi = Math.max(a, b), lo = Math.min(a, b); return Math.floor(hi / lo) + (hi % lo); } },
+  { id: "digitalRoot", level: 3, name: "A + B를 한 자리 수가 될 때까지 각 자리 숫자를 계속 더함", hint: "답은 항상 1~9 중 하나예요. 더하고, 또 더해 보세요.",
+    gen: () => [rand(10, 999), rand(10, 999)], f: (a, b) => 1 + ((a + b - 1) % 9) },
+  { id: "min", level: 1, kind: "creative", name: "두 수 중 더 작은 수", hint: "두 수 중 하나가 그대로 답이 돼요.",
+    gen: () => { const a = rand(1, 99); let b; do { b = rand(1, 99); } while (b === a); return [a, b]; }, f: (a, b) => Math.min(a, b) },
+  { id: "firstDigits", level: 1, kind: "creative", name: "A의 맨 앞 숫자 뒤에 B의 맨 앞 숫자를 붙임", hint: "두 수의 시작 부분만 보세요.",
+    gen: () => [rand(10, 999), rand(10, 999)], f: (a, b) => Number(`${String(a)[0]}${String(b)[0]}`) },
+  { id: "interleave", level: 2, kind: "creative", name: "A와 B의 숫자를 앞에서부터 하나씩 번갈아 끼워 넣음 (예: 123, 45 → 14253)", hint: "두 수를 지퍼처럼 맞물려 보세요.",
+    gen: () => [rand(100, 999), rand(10, 99)],
+    f: (a, b) => { const x = String(a), y = String(b); let s = ""; for (let i = 0; i < Math.max(x.length, y.length); i++) s += (x[i] || "") + (y[i] || ""); return s; } },
+  { id: "digitDiff", level: 2, kind: "creative", name: "오른쪽 끝을 맞춰 적고, 자리마다 두 숫자의 차이를 씀", hint: "두 수를 위아래로 줄 맞춰 적어 보세요. 빼기와 관련 있어요.",
+    gen: () => { let a, b; do { a = rand(100, 999); b = rand(100, 999); } while (a === b); return [a, b]; },
+    f: (a, b) => { const x = String(a).split("").reverse(), y = String(b).split("").reverse(); let out = ""; for (let i = 0; i < Math.max(x.length, y.length); i++) out = Math.abs(Number(x[i] || 0) - Number(y[i] || 0)) + out; return Number(out); } },
+  { id: "evenSum", level: 2, kind: "creative", name: "두 수에 들어 있는 짝수 숫자(0·2·4·6·8)를 모두 더함", hint: "숫자 하나하나의 성질을 보고 일부만 더해요.",
+    gen: () => { let a, b; do { a = rand(10, 999); b = rand(10, 999); } while (!/[2468]/.test(`${a}${b}`)); return [a, b]; },
+    f: (a, b) => `${a}${b}`.split("").map(Number).filter(d => d % 2 === 0).reduce((s, d) => s + d, 0) },
+  { id: "trailingZeros", level: 3, kind: "creative", name: "A × B를 계산했을 때 맨 끝에 이어지는 0의 개수", hint: "곱한 결과의 끝부분만 보세요. 5와 2가 만나면…",
+    gen: () => [rand(1, 30) * 5, rand(1, 30) * 2], f: (a, b) => { const s = (BigInt(a) * BigInt(b)).toString(); return s.length - s.replace(/0+$/, "").length; } },
+  // ===== 어려운 규칙: 두 수가 서로 엮이는 유형 =====
+  { id: "caesar", level: 3, kind: "creative", name: "A의 각 숫자에 B의 일의 자리를 더하고, 일의 자리만 남김 (예: 129, 3 → 452)", hint: "앞 수의 숫자들이 모두 똑같은 만큼 밀려나요. 9 다음은 0이에요.",
+    gen: () => { let a, b; do { a = rand(100, 999); b = rand(2, 8); } while ((Number(String(a)[0]) + b) % 10 === 0); return [a, b]; },
+    f: (a, b) => Number(String(a).split("").map(d => (Number(d) + (b % 10)) % 10).join("")) },
+  { id: "keepCommon", level: 3, kind: "creative", name: "A에서 B에도 들어 있는 숫자만 남김 (없으면 0)", hint: "뒤의 수는 거름망 역할을 해요.",
+    gen: () => { let a, b; do { a = rand(1000, 9999); b = rand(10, 99); } while (!String(a).split("").some(d => String(b).includes(d)) || String(a).split("").every(d => String(b).includes(d)) || String(a).split("").filter(d => String(b).includes(d))[0] === "0"); return [a, b]; },
+    f: (a, b) => Number(String(a).split("").filter(d => String(b).includes(d)).join("") || "0") },
+  { id: "concatRev", level: 2, kind: "creative", name: "A 뒤에 B를 붙인 다음, 통째로 거꾸로 뒤집음 (예: 12, 34 → 4321)", hint: "두 수를 붙인 다음 거울에 비춰 보세요.",
+    gen: () => { let b; do { b = rand(10, 99); } while (b % 10 === 0); return [rand(10, 99), b]; },
+    f: (a, b) => Number(`${a}${b}`.split("").reverse().join("")) },
+  { id: "repeatB", level: 3, kind: "creative", name: "B를 A의 자릿수만큼 이어 씀 (예: 345, 7 → 777)", hint: "앞 수의 값은 중요하지 않아요. 길이를 보세요.",
+    gen: () => [rand(10, 9999), rand(2, 9)], f: (a, b) => String(b).repeat(String(a).length) },
+  { id: "quotCat", level: 3, kind: "creative", name: "큰 수 ÷ 작은 수의 몫 뒤에 나머지를 이어 붙임 (예: 50, 7 → 71)", hint: "나눗셈 결과 두 가지를 더하지 말고 나란히 놓아요.",
+    gen: () => { let a, b; do { b = rand(3, 9); a = rand(20, 99); } while (a % b === 0); return [a, b]; },
+    f: (a, b) => { const hi = Math.max(a, b), lo = Math.min(a, b); return `${Math.floor(hi / lo)}${hi % lo}`; } },
+  { id: "dropLen", level: 3, kind: "creative", name: "A의 앞에서부터 B의 자릿수만큼 숫자를 지움 (다 지워지면 0)", hint: "뒤의 수는 값보다 길이가 중요해요.",
+    gen: () => { let a; do { a = rand(10000, 99999); } while (String(a)[2] === "0"); return [a, rand(10, 99)]; },
+    f: (a, b) => Number(String(a).slice(String(b).length) || "0") },
+  { id: "biggerCount", level: 3, kind: "creative", name: "A의 숫자 중에서 B의 일의 자리보다 큰 숫자의 개수", hint: "뒤의 수 하나와 앞 수의 숫자들을 하나씩 비교해 보세요.",
+    gen: () => [rand(10000, 99999), rand(2, 7)], f: (a, b) => String(a).split("").filter(d => Number(d) > b % 10).length },
+  { id: "crossLen", level: 3, name: "A × (B의 자릿수) + B × (A의 자릿수)", hint: "두 수의 값과 길이를 서로 엇갈려 곱해요.",
+    gen: () => { let a, b; do { a = rand(5, 999); b = rand(5, 999); } while (String(a).length === String(b).length); return [a, b]; },
+    f: (a, b) => a * String(b).length + b * String(a).length },
 ];
 
 // ===== 큰 수 지원: 단서는 최대 9자리(999,999,999)까지 정확하게 계산 =====
@@ -566,12 +747,11 @@ function makeRound(rule, sign) {
 
 function newGame(know = false) {
   const pool = RULES.filter(r => know || !r.know);
-  // 난이도별 문제 수는 고정(쉬움 4 · 보통 4 · 어려움 3)
-  // 연산형은 판마다 4~6개(나머지는 창의형), 난이도마다 두 유형이 최소 1개씩
-  const LV_TOTAL = { 1: 4, 2: 4, 3: 3 };
-  const nCalc = rand(4, 6);
-  let calcBy;
-  do { calcBy = { 1: rand(1, 3), 2: rand(1, 3), 3: rand(1, 2) }; } while (calcBy[1] + calcBy[2] + calcBy[3] !== nCalc);
+  // 총 7라운드: 난이도별 문제 수는 고정(쉬움 2 · 보통 3 · 어려움 2)
+  // 연산형은 판마다 3~4개(나머지는 창의형), 난이도마다 두 유형이 최소 1개씩
+  const LV_TOTAL = { 1: 2, 2: 3, 3: 2 };
+  const nCalc = rand(3, 4);
+  const calcBy = { 1: 1, 2: nCalc === 4 ? 2 : 1, 3: 1 };
   const picks = [];
   for (const lv of [1, 2, 3]) {
     picks.push(...shuffle(pool.filter(r => r.level === lv && kindOf(r) === "calc")).slice(0, calcBy[lv]));
@@ -630,11 +810,11 @@ function renderStart() {
   app.innerHTML = `
   <section class="hero">
     <h1>미스터리<br><em>사인</em></h1>
-    <div class="demo" aria-label="예시">
+    <div class="demo-card"><span class="demo-cap">예시</span><div class="demo" aria-label="예시">
       <span>3 <span class="s">◆</span> 5 = 16</span>
       <span>7 <span class="s">◆</span> 1 = 16</span>
       <span>4 <span class="s">◆</span> 6 = <span class="q">?</span></span>
-    </div>
+    </div></div>
     <p class="lede">기호 하나에 숨은 규칙을 찾는 게임이에요. 두 수를 넣어 보면 기호가 계산한 결과가 단서로 쌓여요. 규칙을 알아냈다면 문제의 답을 맞히세요. 계산 문제뿐 아니라 숫자 모양, 읽는 법 같은 창의형 문제도 나와요.</p>
     <div class="actions">
       <div class="join nick">
@@ -678,12 +858,23 @@ const FREE_CLUES = 1;   // 혼자 하기: 첫 단서는 감점 없음
 function reward(r) { return Math.max(1, POINTS[r.level] - Math.max(0, r.clues.length - FREE_CLUES) - (r.hintShown ? HINT_COST : 0)); }
 function resetFields() { S.f = { a: "", b: "", ans: "" }; S.active = "a"; }
 
+function showSplash(idx, total, level) {
+  try { if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) return; } catch (e) {}
+  document.querySelectorAll(".splash").forEach(x => x.remove());
+  const d = document.createElement("div");
+  d.className = "splash";
+  d.innerHTML = `<div class="splash-in"><small>ROUND</small><b>${idx + 1}<em> / ${total}</em></b>${pipsHtml(level)}<span class="lv">${LEVEL_NAME[level]}</span></div>`;
+  document.body.appendChild(d);
+  setTimeout(() => d.remove(), 1300);
+}
+
 function startSolo() {
   clearHash();
   S = { v: 2, phase: "play", rounds: newGame(readKnow()), know: readKnow(), idx: 0, score: 0, doubleUsed: false };
   resetFields();
   msg = { text: "", bad: false };
   render();
+  showSplash(0, S.rounds.length, S.rounds[0].level);
 }
 
 function slot(name, label, value, active) {
@@ -757,7 +948,7 @@ function sheet(title, ok, r, rule, deltaTxt, sub, btn) {
   return `
   <div class="sheet-wrap">
     <div class="sheet" role="dialog" aria-label="라운드 결과">
-      <div class="verdict ${ok ? "ok" : "no"}">${esc(title)}</div>
+      <div class="verdict ${ok ? "ok" : "no"}"><span class="vicon">${ok ? svgI('<path d="M5 12l5 5 9-10"/>') : svgI('<path d="M6 6l12 12M18 6L6 18"/>')}</span>${esc(title)}</div>
       <div class="delta">${r.q[0]} ${sgn(r.sign)} ${r.q[1]} = ${esc(r.answer)} <span style="color:var(--muted);font-weight:500">· ${esc(deltaTxt)}</span></div>
       <div class="rule-name"><span class="kind">${KIND_NAME[kindOf(rule)]}</span> ${esc(rule.name)}</div>
       ${rule.learn ? `<div class="learn"><b>알아두기</b>${esc(rule.learn)}</div>` : ""}
@@ -780,7 +971,7 @@ function renderEnd() {
   <section class="hero" style="padding-top:2vh">
     <h2 class="title-sm">${rank}</h2>
     <div class="big">${S.score}<small> / ${max}점</small></div>
-    <p class="lede">11문제 중 ${correct}문제를 맞혔고, 단서를 모두 ${clues}개 썼어요.${isBest ? " 최고 기록을 새로 세웠어요." : best ? ` 최고 기록은 ${best}점이에요.` : ""}</p>
+    <p class="lede">${S.rounds.length}문제 중 ${correct}문제를 맞혔고, 단서를 모두 ${clues}개 썼어요.${isBest ? " 최고 기록을 새로 세웠어요." : best ? ` 최고 기록은 ${best}점이에요.` : ""}</p>
     <ul class="summary">
       ${S.rounds.map((r, i) => {
         const rule = ruleById(r.ruleId);
@@ -861,6 +1052,7 @@ function nextRound() {
   msg = { text: "", bad: false };
   render();
   window.scrollTo(0, 0);
+  showSplash(S.idx, S.rounds.length, S.rounds[S.idx].level);
 }
 
 /* ================= 둘이서 (공유 링크) ================= */
@@ -1179,6 +1371,7 @@ async function update() {
   M.st = M.game && Array.isArray(M.game.rounds) ? reduce(M.game, M.moves) : null;
   const st = M.st;
   if (prevSt && st && M.loaded) detectEvents(prevSt, st);
+  if (st) detectChat();
   if (st && !st.players[1] && M.me !== M.game.host && M.gDef && M.mDef && !M.joinSent) {
     M.joinSent = true;
     send("join", { name: cleanName(readName()) });
@@ -1200,6 +1393,7 @@ async function update() {
       if (pid !== M.me && M.loaded) showToast(`${nameOf(pid)}가 아이템을 사용했어요: ${ITEMS[k].name}`, ITEMS[k].desc, "item");
     }
     if (M.mDef) M.loaded = true;
+    if (st.ready && st.idx !== M.splashIdx && !st.ended && M.loaded) { M.splashIdx = st.idx; showSplash(st.idx, st.rounds.length, st.rounds[st.idx].level); }
     if (st.idx !== M.lastIdx) { M.lastIdx = st.idx; M.armed = null; M.f.ans = ""; M.active = myClueTurn(st) ? "clue" : "ans"; }
   }
   render();
@@ -1557,7 +1751,90 @@ function render() {
   else if (S.phase === "start") renderStart();
   else if (S.phase === "end") renderEnd();
   else renderPlay();
+  syncChat();
 }
+/* ================= 둘이서 채팅 ================= */
+const chatRoot = document.getElementById("chatroot");
+const QUICK_CHAT = ["ㅋㅋㅋ", "잠깐만!", "어렵다…", "알 것 같아", "GG"];
+function chatMsgs() {
+  if (!M || !M.st) return [];
+  return M.moves.filter(m => m.type === "chat" && typeof m.text === "string" && M.st.players.includes(m.by))
+    .sort((a, b) => ((Number(a.t) || 0) - (Number(b.t) || 0)) || (a.id < b.id ? -1 : 1));
+}
+function chatOn() { return S.phase === "multi" && M && M.st && M.st.players[1] && M.st.players.includes(M.me); }
+function syncChat() {
+  if (!chatRoot) return;
+  if (!chatOn()) { document.body.classList.remove("has-chat"); chatRoot.innerHTML = ""; chatRoot.dataset.code = ""; return; }
+  document.body.classList.add("has-chat");
+  const msgs = chatMsgs();
+  if (chatRoot.dataset.code !== M.code) {
+    chatRoot.dataset.code = M.code;
+    if (M.chatSeen == null) M.chatSeen = msgs.length;
+    chatRoot.innerHTML = `
+      <button class="chat-strip" id="chat-open" aria-label="채팅 열기">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+        <span class="chat-preview" id="chat-preview"></span><span class="chat-badge" id="chat-badge" hidden></span>
+      </button>
+      <div class="chat-wrap" id="chat-wrap" hidden>
+        <div class="chat-sheet" role="dialog" aria-label="채팅">
+          <div class="chat-head"><b>채팅</b><button class="back" id="chat-close">닫기</button></div>
+          <ul class="chat-list" id="chat-list"></ul>
+          <div class="chat-quick">${QUICK_CHAT.map(q => `<button type="button" data-q="${esc(q)}">${esc(q)}</button>`).join("")}</div>
+          <form class="chat-form" id="chat-form">
+            <input id="chat-input" maxlength="200" autocomplete="off" placeholder="메시지 입력">
+            <button class="cta" type="submit">보내기</button>
+          </form>
+        </div>
+      </div>`;
+    const open = v => {
+      M.chatOpen = v;
+      document.getElementById("chat-wrap").hidden = !v;
+      if (v) { M.chatSeen = chatMsgs().length; document.getElementById("chat-input").focus(); }
+      syncChat();
+    };
+    document.getElementById("chat-open").onclick = () => open(true);
+    document.getElementById("chat-close").onclick = () => open(false);
+    document.getElementById("chat-wrap").onclick = e => { if (e.target.id === "chat-wrap") open(false); };
+    const sendChat = text => {
+      const t = String(text || "").trim().slice(0, 200);
+      if (!t || !M) return;
+      sendRaw("chat", { text: t });
+    };
+    chatRoot.querySelectorAll("[data-q]").forEach(b => b.onclick = () => sendChat(b.dataset.q));
+    document.getElementById("chat-form").onsubmit = e => {
+      e.preventDefault();
+      const inp = document.getElementById("chat-input");
+      sendChat(inp.value); inp.value = ""; inp.focus();
+    };
+    document.getElementById("chat-wrap").hidden = !M.chatOpen;
+  }
+  if (M.chatOpen) M.chatSeen = msgs.length;
+  const unread = msgs.slice(M.chatSeen || 0).filter(m => m.by !== M.me).length;
+  const last = msgs[msgs.length - 1];
+  const prev = document.getElementById("chat-preview");
+  prev.textContent = last ? `${nameOf(last.by)}: ${last.text}` : "채팅 · 상대에게 메시지를 보내 보세요";
+  const badge = document.getElementById("chat-badge");
+  badge.hidden = !unread; badge.textContent = unread > 9 ? "9+" : String(unread);
+  const list = document.getElementById("chat-list");
+  if (list.dataset.n !== String(msgs.length)) {
+    list.dataset.n = String(msgs.length);
+    list.innerHTML = msgs.length ? msgs.map(m => `<li class="${m.by === M.me ? "me" : ""}"><span class="who"></span><span class="txt"></span></li>`).join("") : `<li class="empty">아직 메시지가 없어요.</li>`;
+    [...list.querySelectorAll("li:not(.empty)")].forEach((li, i) => { li.querySelector(".who").textContent = nameOf(msgs[i].by); li.querySelector(".txt").textContent = msgs[i].text; });
+    list.scrollTop = list.scrollHeight;
+  }
+}
+// 새 메시지가 오면 채팅창이 닫혀 있을 때 알림
+function detectChat() {
+  const msgs = chatMsgs();
+  if (M.chatCount == null) { M.chatCount = msgs.length; return; }
+  const fresh = msgs.slice(M.chatCount).filter(m => m.by !== M.me);
+  M.chatCount = msgs.length;
+  if (fresh.length && !M.chatOpen && M.loaded && !(M.toast && M.toast.kind !== "chat")) {   // 게임 알림이 떠 있으면 채팅 알림은 아래 줄 배지로만
+    const m = fresh[fresh.length - 1];
+    showToast(`${nameOf(m.by)}: ${m.text}`, "", "chat", 3500);
+  }
+}
+
 
 function press(k) {
   if (S.phase === "multi") return M && multiPress(k);
