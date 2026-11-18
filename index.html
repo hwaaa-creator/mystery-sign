@@ -1,0 +1,1245 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>미스터리 사인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=IBM+Plex+Sans+KR:wght@400;500;700&family=JetBrains+Mono:wght@500;700;800&display=swap" rel="stylesheet">
+<style>
+:root {
+  /* 한 장의 문제 카드가 화면 중심. 수식이 주인공, 나머지는 조용히. 단일 다크 테마. */
+  --ink: #11131a;
+  --panel: #1a1d27;
+  --line: #2b3040;
+  --paper: #ece5d6;
+  --muted: #8d91a1;
+  --brass: #d6a84e;
+  --good: #63c294;
+  --bad: #e36a5b;
+  --display: "Black Han Sans", "IBM Plex Sans KR", system-ui, sans-serif;
+  --body: "IBM Plex Sans KR", "Apple SD Gothic Neo", "Malgun Gothic", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  background: var(--ink);
+  background-image: radial-gradient(120% 60% at 50% -10%, #232838 0%, var(--ink) 60%);
+  color: var(--paper);
+  font-family: var(--body);
+  -webkit-tap-highlight-color: transparent;
+}
+button { font-family: inherit; color: inherit; cursor: pointer; }
+button:focus-visible { outline: 2px solid var(--brass); outline-offset: 2px; }
+.app {
+  max-width: 460px; margin: 0 auto; min-height: 100%;
+  padding: calc(env(safe-area-inset-top) + 14px) 16px calc(env(safe-area-inset-bottom) + 16px);
+  display: flex; flex-direction: column; gap: 14px;
+}
+
+/* 상단 바 */
+.bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.round { font-family: var(--mono); font-size: 13px; color: var(--muted); letter-spacing: .08em; }
+.round b { color: var(--paper); font-size: 17px; }
+.score { font-family: var(--mono); font-weight: 800; font-size: 22px; font-variant-numeric: tabular-nums; }
+.score small { font-family: var(--body); font-weight: 500; font-size: 12px; color: var(--muted); margin-right: 4px; }
+.track { display: grid; grid-template-columns: repeat(11, 1fr); gap: 4px; }
+.track i { height: 4px; border-radius: 2px; background: var(--line); }
+.track i.ok { background: var(--good); }
+.track i.no { background: var(--bad); }
+.track i.now { background: var(--brass); }
+
+/* 문제 카드 */
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  padding: 16px 16px 18px; display: flex; flex-direction: column; gap: 12px;
+}
+.meta { display: flex; justify-content: space-between; align-items: center; }
+.level { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 700; }
+.pips { display: inline-flex; gap: 3px; }
+.pips span { width: 8px; height: 8px; border-radius: 50%; border: 1.5px solid var(--brass); }
+.pips span.on { background: var(--brass); }
+.worth { font-size: 12px; color: var(--muted); }
+.ex { display: flex; flex-direction: column; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.eq {
+  display: grid; grid-template-columns: 1fr auto 1fr auto 1.3fr; align-items: center; gap: 10px;
+  font-family: var(--mono); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums;
+  padding: 6px 4px; border-bottom: 1px dashed var(--line);
+}
+.eq .l { text-align: right; }
+.eq .s { color: var(--brass); font-size: 20px; width: 1.4em; text-align: center; }
+.eq .e { color: var(--muted); font-weight: 500; }
+.eq .r { text-align: left; color: var(--paper); }
+.eq.new { animation: drop .35s ease-out; }
+.eq.extra .r { color: var(--brass); }
+@keyframes drop { from { opacity: .2; transform: translateY(-6px); } to { opacity: 1; transform: none; } }
+
+.question {
+  display: grid; grid-template-columns: 1fr auto 1fr auto 1.3fr; align-items: center; gap: 10px;
+  font-family: var(--mono); font-weight: 800; font-size: 30px; font-variant-numeric: tabular-nums;
+  padding: 14px 4px 4px;
+}
+.question .l { text-align: right; }
+.question .s {
+  width: 1.5em; height: 1.5em; display: grid; place-items: center; font-size: 22px;
+  color: var(--ink); background: var(--brass); border-radius: 50%;
+}
+.question .e { color: var(--muted); font-weight: 500; }
+.slot {
+  min-height: 1.4em; border-bottom: 3px solid var(--brass); text-align: left; padding: 0 2px;
+  color: var(--paper); overflow-wrap: anywhere;
+}
+.slot.empty::after { content: "?"; color: var(--muted); }
+.slot.blink::after { content: "▏"; color: var(--brass); animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.card.shake { animation: shake .35s; }
+@keyframes shake { 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+
+.hintline { font-size: 14px; line-height: 1.5; color: var(--brass); background: rgba(214,168,78,.08); border-radius: 10px; padding: 8px 12px; }
+.msg { min-height: 20px; font-size: 14px; text-align: center; color: var(--muted); }
+.msg.bad { color: var(--bad); }
+
+/* 도구 */
+.tools { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.tool {
+  background: transparent; border: 1px solid var(--line); border-radius: 12px;
+  padding: 9px 6px; font-size: 13px; font-weight: 700; line-height: 1.25;
+}
+.tool small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
+.tool:disabled { opacity: .35; cursor: default; }
+.tool.double.armed { background: var(--brass); color: var(--ink); border-color: var(--brass); }
+.tool.double.armed small { color: var(--ink); }
+
+/* 키패드 */
+.pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.key {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+  padding: 13px 0; font-family: var(--mono); font-size: 22px; font-weight: 700;
+  transition: transform .06s;
+}
+.key:active { transform: scale(.96); background: var(--line); }
+.key.go { background: var(--brass); color: var(--ink); border-color: var(--brass); font-family: var(--body); font-size: 17px; }
+.key.del { font-size: 18px; color: var(--muted); }
+
+/* 시작 / 결과 화면 */
+.hero { display: flex; flex-direction: column; gap: 18px; padding-top: 6vh; }
+.hero h1 { font-family: var(--display); font-weight: 400; font-size: 54px; line-height: 1; margin: 0; letter-spacing: -.01em; }
+.hero h1 em { font-style: normal; color: var(--brass); }
+.lede { color: var(--muted); font-size: 15px; line-height: 1.6; margin: 0; max-width: 34em; }
+.demo { font-family: var(--mono); font-weight: 800; font-size: 26px; display: flex; flex-direction: column; gap: 4px; }
+.demo .s { color: var(--brass); }
+.demo .q { color: var(--muted); }
+.rules { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; font-size: 14px; line-height: 1.5; }
+.rules li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; border-top: 1px solid var(--line); padding-top: 8px; }
+.rules b { color: var(--brass); font-weight: 700; }
+.cta {
+  background: var(--brass); color: var(--ink); border: 0; border-radius: 14px;
+  padding: 16px; font-size: 18px; font-weight: 700; width: 100%;
+}
+.ghost { background: transparent; border: 1px solid var(--line); border-radius: 14px; padding: 14px; font-size: 15px; font-weight: 700; width: 100%; }
+.best { font-size: 13px; color: var(--muted); text-align: center; }
+
+/* 라운드 결과 시트 */
+.sheet-wrap { position: fixed; inset: 0; background: rgba(8,9,13,.72); display: flex; align-items: flex-end; justify-content: center; z-index: 10; }
+.sheet {
+  width: 100%; max-width: 460px; background: var(--panel); border: 1px solid var(--line); border-bottom: 0;
+  border-radius: 20px 20px 0 0; padding: 22px 18px calc(env(safe-area-inset-bottom) + 18px);
+  display: flex; flex-direction: column; gap: 12px; animation: up .28s ease-out;
+}
+@keyframes up { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.verdict { font-family: var(--display); font-size: 34px; line-height: 1; }
+.verdict.ok { color: var(--good); }
+.verdict.no { color: var(--bad); }
+.delta { font-family: var(--mono); font-weight: 800; font-size: 18px; }
+.rule-name { font-size: 17px; font-weight: 700; line-height: 1.45; }
+.kind { display: inline-block; font-size: 12px; font-weight: 700; color: var(--ink); background: var(--brass); border-radius: 999px; padding: 2px 8px; margin-right: 4px; vertical-align: 2px; }
+.rule-ex { font-family: var(--mono); font-size: 15px; color: var(--muted); line-height: 1.6; }
+
+.summary { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+.summary li { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: start; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; line-height: 1.4; }
+.summary .n { font-family: var(--mono); color: var(--muted); }
+.summary .p { font-family: var(--mono); font-weight: 800; font-variant-numeric: tabular-nums; }
+.summary .p.ok { color: var(--good); }
+.summary .p.no { color: var(--bad); }
+.summary .lv { font-size: 12px; color: var(--muted); }
+.big { font-family: var(--mono); font-weight: 800; font-size: 64px; line-height: 1; }
+.big small { font-size: 22px; color: var(--muted); }
+.title-sm { font-family: var(--display); font-size: 30px; margin: 0; font-weight: 400; }
+
+
+/* 단서 · 문제 입력 줄 */
+.ex { max-height: 34vh; overflow-y: auto; }
+.empty-note { margin: 0; font-size: 14px; line-height: 1.55; color: var(--muted); border: 1px dashed var(--line); border-radius: 12px; padding: 12px; }
+.empty-note b { color: var(--paper); }
+.probe { display: grid; grid-template-columns: 38px 1fr; align-items: center; gap: 8px; }
+.probe .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+.probe .line {
+  display: grid; grid-template-columns: 1fr auto 1fr auto 1.3fr; align-items: center; gap: 8px;
+  font-family: var(--mono); font-weight: 700; font-size: 22px; font-variant-numeric: tabular-nums;
+}
+.probe .l { text-align: right; }
+.probe .s { color: var(--brass); width: 1.4em; text-align: center; }
+.probe .e { color: var(--muted); font-weight: 500; }
+.probe.quest { border-top: 1px solid var(--line); padding-top: 12px; }
+.probe.quest .line { font-size: 28px; font-weight: 800; }
+.probe .big-s { width: 1.5em; height: 1.5em; display: grid; place-items: center; font-size: 20px; color: var(--ink); background: var(--brass); border-radius: 50%; }
+button.slot {
+  font: inherit; color: var(--paper); background: rgba(255,255,255,.03); border: 1px solid var(--line);
+  border-radius: 10px; min-height: 1.7em; padding: 0 6px; text-align: center; overflow-wrap: anywhere;
+}
+button.slot.active { border-color: var(--brass); box-shadow: 0 0 0 2px rgba(214,168,78,.25); }
+button.slot.empty::after { content: "·"; color: var(--muted); }
+button.slot.active.empty::after { content: "▏"; color: var(--brass); animation: blink 1s steps(1) infinite; }
+.key.go.probe-go { background: transparent; color: var(--brass); border-color: var(--brass); }
+
+
+/* 처음 화면 버튼 */
+.actions { display: flex; flex-direction: column; gap: 10px; }
+.cta.alt { background: transparent; color: var(--brass); border: 1.5px solid var(--brass); }
+.join { display: grid; grid-template-columns: auto 1fr auto; gap: 8px; align-items: center; }
+.join label { font-size: 13px; color: var(--muted); }
+.join input {
+  font-family: var(--mono); font-size: 16px; color: var(--paper); background: var(--panel);
+  border: 1px solid var(--line); border-radius: 12px; padding: 12px; min-width: 0;
+}
+.join input:focus { outline: 2px solid var(--brass); outline-offset: 1px; }
+.join .ghost { width: auto; padding: 12px 16px; }
+.join.nick { grid-template-columns: auto 1fr; }
+.back { background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 5px 12px; font-size: 13px; color: var(--muted); }
+
+/* 둘이서 */
+.scoreboard { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+.chip { display: flex; justify-content: space-between; align-items: center; gap: 8px; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 8px 12px; min-width: 0; }
+.chip.me { border-color: var(--brass); }
+.chip .who { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip b { font-family: var(--mono); font-size: 22px; font-variant-numeric: tabular-nums; }
+.vs { font-family: var(--mono); font-size: 13px; color: var(--muted); }
+.turn { font-size: 14px; line-height: 1.5; color: var(--muted); border-left: 3px solid var(--line); padding: 4px 10px; }
+.turn.mine { color: var(--paper); border-left-color: var(--brass); }
+.turn b { color: var(--brass); }
+.fixed { text-align: center; }
+.muted { color: var(--muted); }
+.small { font-size: 14px; font-family: var(--body); }
+.wait-dot { color: var(--muted); animation: blink 1.2s steps(1) infinite; }
+.msg .bad { color: var(--bad); }
+.tools.one { grid-template-columns: 1fr; }
+.invite { display: flex; flex-direction: column; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px; }
+.invite .tag { font-size: 12px; font-weight: 700; color: var(--muted); }
+.link { font-family: var(--mono); font-size: 13px; line-height: 1.5; word-break: break-all; user-select: all; -webkit-user-select: all; color: var(--paper); }
+.row2 { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.row2 .cta { padding: 12px; font-size: 16px; }
+.codechip { font-size: 13px; color: var(--muted); }
+.codechip b { font-family: var(--mono); color: var(--brass); font-size: 15px; }
+.pulse { display: flex; gap: 6px; justify-content: center; padding-top: 8px; }
+.pulse i { width: 8px; height: 8px; border-radius: 50%; background: var(--brass); animation: pulse 1.2s ease-in-out infinite; }
+.pulse i:nth-child(2) { animation-delay: .2s; } .pulse i:nth-child(3) { animation-delay: .4s; }
+@keyframes pulse { 0%, 100% { opacity: .25; } 50% { opacity: 1; } }
+.final { display: grid; grid-template-columns: 1fr auto 1fr; align-items: end; gap: 10px; }
+.final > div { display: flex; flex-direction: column; gap: 4px; }
+.final > div:last-child { text-align: right; }
+.final .who { font-size: 14px; color: var(--muted); font-weight: 700; }
+
+
+/* 긴 숫자 */
+.eq > span, .probe .line > *, .question > * { min-width: 0; overflow-wrap: anywhere; }
+.eq.long { font-size: 16px; gap: 6px; }
+.eq.xl { font-size: 13px; gap: 5px; }
+button.slot { font-size: clamp(12px, 4.2vw, 1em); }
+
+/* 배경지식 */
+.toggle { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 12px; cursor: pointer; }
+.toggle input { width: 20px; height: 20px; margin: 2px 0 0; accent-color: var(--brass); }
+.toggle b { display: block; font-size: 15px; }
+.toggle small { display: block; font-size: 12px; line-height: 1.5; color: var(--muted); margin-top: 2px; }
+.kbadge { font-size: 11px; font-weight: 700; color: var(--brass); border: 1px solid var(--brass); border-radius: 999px; padding: 1px 7px; margin-left: 4px; }
+.learn { font-size: 14px; line-height: 1.6; background: rgba(214,168,78,.08); border-left: 3px solid var(--brass); border-radius: 0 10px 10px 0; padding: 10px 12px; }
+.learn b { display: block; color: var(--brass); font-size: 12px; margin-bottom: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+@media (max-width: 360px) {
+  .eq { font-size: 19px; } .question { font-size: 25px; } .hero h1 { font-size: 46px; }
+}
+</style>
+</head>
+<body>
+<main class="app" id="app"></main>
+
+<script id="rules">
+// ===== 규칙 정의 (rules:start) =====
+const rand = (lo, hi) => lo + Math.floor(Math.random() * (hi - lo + 1));
+const digits = n => String(n).split("").map(Number);
+const ds = n => digits(n).reduce((s, d) => s + d, 0);
+const dp = n => digits(n).reduce((s, d) => s * d, 1);
+const gcd = (a, b) => (b ? gcd(b, a % b) : a);
+const isPrime = n => { if (n < 2) return false; for (let i = 2; i * i <= n; i++) if (n % i === 0) return false; return true; };
+const rev = n => Number(String(n).split("").reverse().join(""));
+const noZero = (lo, hi) => { let n; do { n = rand(lo, hi); } while (String(n).includes("0")); return n; };
+const LOOPS = { 0: 1, 6: 1, 9: 1, 8: 2 };
+const noFour = (lo, hi) => { let n; do { n = rand(lo, hi); } while (String(n).includes("4")); return n; };
+
+const SEG = { 0: 6, 1: 2, 2: 5, 3: 5, 4: 4, 5: 5, 6: 6, 7: 3, 8: 7, 9: 6 };
+const kor4 = n => { let c = 0; for (const u of [1000, 100, 10, 1]) { const d = Math.floor(n / u) % 10; if (!d) continue; c += u === 1 ? 1 : (d === 1 ? 1 : 2); } return c; };
+const korLen = n => { const eok = Math.floor(n / 1e8), man = Math.floor(n / 1e4) % 1e4; let c = kor4(n % 1e4); if (man) c += man === 1 ? 1 : kor4(man) + 1; if (eok) c += kor4(eok) + 1; return c; };
+const EN1 = ["", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine", "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen", "seventeen", "eighteen", "nineteen"];
+const EN10 = ["", "", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety"];
+const eng3 = n => { let w = ""; if (n >= 100) { w += EN1[Math.floor(n / 100)] + "hundred"; n %= 100; } if (n >= 20) w += EN10[Math.floor(n / 10)] + EN1[n % 10]; else w += EN1[n]; return w; };
+const engWord = n => { let w = ""; if (n >= 1e6) { w += eng3(Math.floor(n / 1e6)) + "million"; n %= 1e6; } if (n >= 1000) { w += eng3(Math.floor(n / 1000)) + "thousand"; n %= 1000; } return w + eng3(n); };
+const engLen = n => engWord(n).length;
+
+const divCount = n => { let c = 0; for (let i = 1; i * i <= n; i++) if (n % i === 0) c += i * i === n ? 1 : 2; return c; };
+const commonCount = (a, b) => [...new Set(String(a))].filter(d => String(b).includes(d)).length;
+const romanLen = n => { const th = Math.floor(n / 1000); n %= 1000; const V = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]]; let s = ""; for (const [v, r] of V) while (n >= v) { s += r; n -= v; } return th + s.length; };
+
+const RULES = [
+  // 쉬움 (1점)
+  { id: "add", level: 1, name: "두 수의 합  (A + B)", hint: "가장 기본적인 사칙연산 하나예요.",
+    gen: () => [rand(2, 40), rand(2, 40)], f: (a, b) => a + b },
+  { id: "mul", level: 1, name: "두 수의 곱  (A × B)", hint: "가장 기본적인 사칙연산 하나예요.",
+    gen: () => [rand(2, 12), rand(2, 12)], f: (a, b) => a * b },
+  { id: "sub", level: 1, name: "앞의 수에서 뒤의 수를 뺌  (A − B)", hint: "결과가 항상 앞의 수보다 작아요.",
+    gen: () => { const a = rand(15, 60); return [a, rand(1, a - 3)]; }, f: (a, b) => a - b },
+  { id: "twoAplusB", level: 1, name: "A × 2 + B", hint: "앞의 수가 뒤의 수보다 두 배 중요해요.",
+    gen: () => [rand(2, 20), rand(1, 20)], f: (a, b) => 2 * a + b },
+  { id: "dblsum", level: 1, name: "(A + B) × 2", hint: "덧셈을 한 뒤 한 번 더 무언가를 해요.",
+    gen: () => [rand(1, 25), rand(1, 25)], f: (a, b) => 2 * (a + b) },
+  { id: "avg", level: 1, name: "두 수의 평균  ((A + B) ÷ 2)", hint: "결과는 항상 두 수 사이에 있어요.",
+    gen: () => { const a = rand(2, 40); let b; do { b = rand(2, 40); } while (b === a || (a + b) % 2); return [a, b]; },
+    f: (a, b) => (a + b) / 2 },
+
+  // 보통 (2점)
+  { id: "twoAminusB", level: 2, name: "A × 2 − B", hint: "앞의 수를 키운 다음 뒤의 수만큼 줄여요.",
+    gen: () => { const a = rand(5, 30); return [a, rand(1, 2 * a - 1)]; }, f: (a, b) => 2 * a - b },
+  { id: "sumdiff", kind: "creative", level: 2, name: "두 수의 합 뒤에 두 수의 차(큰 수 − 작은 수)를 이어 붙임", hint: "답은 숫자 두 개를 나란히 붙인 거예요.",
+    gen: () => { const a = rand(10, 60); return [a, rand(1, a - 1)]; }, f: (a, b) => `${a + b}${Math.abs(a - b)}` },
+  { id: "mod", level: 2, name: "큰 수를 작은 수로 나눈 나머지", hint: "나눗셈과 관련이 있어요. 몫은 아니에요.",
+    gen: () => { let a, b; do { a = rand(3, 60); b = rand(3, 60); } while (a === b || Math.max(a, b) % Math.min(a, b) === 0); return [a, b]; },
+    f: (a, b) => Math.max(a, b) % Math.min(a, b) },
+  { id: "dsProd", level: 2, name: "(A의 각 자리 숫자 합) × (B의 각 자리 숫자 합)", hint: "두 자리 수를 한 자리씩 쪼개 보세요.",
+    gen: () => [rand(10, 99), rand(10, 99)], f: (a, b) => ds(a) * ds(b) },
+  { id: "sq", level: 2, name: "A² + B²  (각각 제곱해서 더함)", hint: "같은 수를 두 번 곱하는 계산이 들어가요.",
+    gen: () => [rand(1, 12), rand(1, 12)], f: (a, b) => a * a + b * b },
+  { id: "mulMinusSum", level: 2, name: "A × B − A − B", hint: "곱한 값에서 무언가를 빼요.",
+    gen: () => [rand(2, 15), rand(2, 15)], f: (a, b) => a * b - a - b },
+  { id: "digitSumAll", level: 2, name: "두 수에 들어 있는 모든 숫자를 하나씩 더함", hint: "숫자를 한 자리씩 쪼개 보세요.",
+    gen: () => [rand(10, 999), rand(10, 999)], f: (a, b) => ds(a) + ds(b) },
+  { id: "sqdiff", level: 2, name: "A² − B²", hint: "같은 수를 두 번 곱하는 계산이 들어가요.",
+    gen: () => { const a = rand(4, 15); return [a, rand(1, a - 1)]; }, f: (a, b) => a * a - b * b },
+
+  // 어려움 (3점)
+  { id: "loops", kind: "creative", level: 3, name: "숫자 모양에 있는 닫힌 동그라미 개수 (0·6·9는 1개, 8은 2개, 4는 세지 않음)", hint: "계산이 아니라 숫자의 생김새를 보세요.",
+    gen: () => [noFour(10, 9999), noFour(10, 999)], f: (a, b) => digits(`${a}${b}`).reduce((s, d) => s + (LOOPS[d] || 0), 0) },
+  { id: "primes", level: 3, name: "두 수 사이에 있는 소수의 개수 (두 수 자신은 제외)", hint: "두 수 사이에 있는 특별한 수들을 세어 보세요.",
+    gen: () => { const a = rand(1, 50); return [a, a + rand(6, 30)]; },
+    f: (a, b) => { let c = 0; for (let n = Math.min(a, b) + 1; n < Math.max(a, b); n++) if (isPrime(n)) c++; return c; } },
+  { id: "gcd", level: 3, name: "두 수의 최대공약수", hint: "두 수를 동시에 나누어떨어지게 하는 수를 생각해 보세요.",
+    gen: () => { let g, x, y; do { g = rand(2, 12); x = rand(1, 9); y = rand(1, 9); } while (x === y || gcd(x, y) !== 1 || g * x > 99 || g * y > 99); return [g * x, g * y]; },
+    f: (a, b) => gcd(a, b) },
+  { id: "lcm", level: 3, name: "두 수의 최소공배수", hint: "두 수의 배수를 나란히 적어 보세요.",
+    gen: () => { let a, b; do { a = rand(2, 15); b = rand(2, 15); } while (a === b || a % b === 0 || b % a === 0); return [a, b]; },
+    f: (a, b) => (a * b) / gcd(a, b) },
+  { id: "revSum", kind: "creative", level: 3, name: "각 수를 거꾸로 뒤집어서 더함 (예: 12 → 21)", hint: "숫자의 순서를 바꿔 보세요.",
+    gen: () => { let a, b; do { a = noZero(12, 98); b = noZero(12, 98); } while (a === rev(a) || b === rev(b)); return [a, b]; },
+    f: (a, b) => rev(a) + rev(b) },
+  { id: "rangeSum", level: 3, name: "작은 수부터 큰 수까지 모든 정수의 합", hint: "두 수 사이를 빠짐없이 채워 보세요.",
+    gen: () => { const a = rand(1, 15); return [a, a + rand(2, 8)]; },
+    f: (a, b) => { let s = 0; for (let n = Math.min(a, b); n <= Math.max(a, b); n++) s += n; return s; } },
+  { id: "digitProdSum", level: 3, name: "(A의 각 자리 숫자 곱) + (B의 각 자리 숫자 곱)", hint: "두 자리 수를 한 자리씩 쪼개 보세요. 덧셈이 아니에요.",
+    gen: () => [noZero(11, 99), noZero(11, 99)], f: (a, b) => dp(a) + dp(b) },
+  { id: "mulDigitSum", level: 3, name: "A × B를 계산한 뒤, 그 결과의 각 자리 숫자를 더함", hint: "익숙한 계산을 먼저 하고, 그 결과를 쪼개 보세요.",
+    gen: () => [rand(3, 30), rand(3, 30)], f: (a, b) => ds(a * b) },
+  // ===== 창의형 =====
+  { id: "clock", level: 1, kind: "creative", name: "시계: A시에서 B시간이 지나면 몇 시? (1~12)", hint: "결과가 12를 넘지 않아요. 매일 보는 물건을 떠올려 보세요.",
+    gen: () => [rand(1, 12), rand(1, 30)], f: (a, b) => ((a + b - 1) % 12) + 1 },
+  { id: "concat", level: 1, kind: "creative", name: "A 뒤에 B를 그대로 이어 붙임", hint: "계산하지 말고 그대로 써 보세요.",
+    gen: () => [rand(1, 99), rand(1, 99)], f: (a, b) => `${a}${b}` },
+  { id: "max", level: 1, kind: "creative", name: "두 수 중 더 큰 수", hint: "두 수 중 하나가 그대로 답이 돼요.",
+    gen: () => { const a = rand(1, 99); let b; do { b = rand(1, 99); } while (b === a); return [a, b]; }, f: (a, b) => Math.max(a, b) },
+  { id: "noCarry", level: 2, kind: "creative", name: "받아올림 없는 덧셈 (같은 자리끼리 더해 일의 자리만 남김)", hint: "덧셈인데 뭔가 하나를 빼먹어요.",
+    gen: () => { let a, b; do { a = rand(15, 99); b = rand(15, 99); } while ((a % 10) + (b % 10) < 10 && Math.floor(a / 10) + Math.floor(b / 10) < 10); return [a, b]; },
+    f: (a, b) => { const x = String(a).split("").reverse(), y = String(b).split("").reverse(); let out = ""; for (let i = 0; i < Math.max(x.length, y.length); i++) out = ((Number(x[i] || 0) + Number(y[i] || 0)) % 10) + out; return Number(out); } },
+  { id: "sortDesc", level: 2, kind: "creative", name: "두 수의 숫자를 모두 모아 만들 수 있는 가장 큰 수", hint: "두 수에 있는 숫자 카드를 모두 모아 다시 늘어놓아 보세요.",
+    gen: () => [rand(10, 99), rand(1, 99)], f: (a, b) => `${a}${b}`.split("").sort((p, q) => q - p).join("") },
+  { id: "oddCount", level: 2, kind: "creative", name: "두 수에 들어 있는 홀수 숫자(1·3·5·7·9)의 개수", hint: "숫자 하나하나의 성질을 보세요.",
+    gen: () => [rand(10, 999), rand(10, 999)], f: (a, b) => `${a}${b}`.split("").filter(d => d % 2 === 1).length },
+  { id: "digitMax", level: 2, kind: "creative", name: "두 수를 오른쪽 끝을 맞춰 적고, 자리마다 더 큰 숫자를 고름", hint: "두 수를 위아래로 줄 맞춰 적어 보세요.",
+    gen: () => [rand(100, 999), rand(10, 999)],
+    f: (a, b) => { const x = String(a).split("").reverse(), y = String(b).split("").reverse(); let out = ""; for (let i = 0; i < Math.max(x.length, y.length); i++) out = Math.max(Number(x[i] || 0), Number(y[i] || 0)) + out; return Number(out); } },
+  { id: "digitLenSum", level: 2, kind: "creative", name: "두 수의 자릿수(몇 자리 수인지)를 더함", hint: "수의 크기보다 길이가 중요해요.",
+    gen: () => [rand(1, 999), rand(1, 999)], f: (a, b) => String(a).length + String(b).length },
+  { id: "korean", level: 3, kind: "creative", name: "두 수를 한글로 읽었을 때 글자 수의 합 (예: 25 → 이십오 = 3자)", hint: "소리 내어 읽어 보세요.",
+    gen: () => [rand(1, 999), rand(1, 999)], f: (a, b) => korLen(a) + korLen(b) },
+  { id: "english", level: 3, kind: "creative", name: "두 수를 영어로 썼을 때 알파벳 개수의 합 (예: 12 → twelve = 6)", hint: "외국어로 읽어 보세요.",
+    gen: () => [rand(1, 99), rand(1, 99)], f: (a, b) => engLen(a) + engLen(b) },
+  { id: "binary", level: 3, kind: "creative", name: "두 수를 2진수로 썼을 때 나오는 1의 개수의 합", hint: "컴퓨터는 숫자를 0과 1로만 써요.",
+    gen: () => [rand(2, 63), rand(2, 63)], f: (a, b) => (a.toString(2) + b.toString(2)).split("").filter(d => d === "1").length },
+  { id: "lastPow", level: 3, kind: "creative", name: "A를 B번 곱한 수(A의 B제곱)의 일의 자리", hint: "답은 항상 한 자리예요. 같은 수를 여러 번 곱해 보세요.",
+    gen: () => [rand(2, 19), rand(2, 9)], f: (a, b) => { let r = 1; for (let i = 0; i < b; i++) r = (r * a) % 10; return r; } },
+  { id: "segments", level: 3, kind: "creative", name: "디지털 숫자판에서 켜지는 막대 개수 (1=2, 7=3, 4=4, 2·3·5=5, 0·6·9=6, 8=7)", hint: "전자시계나 엘리베이터 숫자판을 떠올려 보세요.",
+    gen: () => [rand(10, 999), rand(1, 99)], f: (a, b) => `${a}${b}`.split("").reduce((s, d) => s + SEG[d], 0) },
+  { id: "removeDigits", level: 3, kind: "creative", name: "A에서 B에 들어 있는 숫자를 모두 지움 (다 지워지면 0)", hint: "뒤의 수는 지우개 역할을 해요.",
+    gen: () => { let a, b; do { a = rand(100, 999); b = rand(1, 99); } while (!String(b).split("").some(d => String(a).includes(d)) || String(a).split("").every(d => String(b).includes(d))); return [a, b]; },
+    f: (a, b) => Number(String(a).split("").filter(d => !String(b).includes(d)).join("") || "0") },
+  // ===== 추가 연산형 =====
+  { id: "quot", level: 1, name: "큰 수를 작은 수로 나눈 몫 (나머지는 버림)", hint: "나눗셈과 관련이 있어요. 나머지는 버려요.",
+    gen: () => { const b = rand(2, 9); return [rand(b * 2, 99), b]; }, f: (a, b) => Math.floor(Math.max(a, b) / Math.min(a, b)) },
+  { id: "mulLast", level: 2, name: "A × (B의 일의 자리 숫자)", hint: "뒤의 수 전체가 쓰이지는 않아요.",
+    gen: () => { let b; do { b = rand(11, 99); } while (b % 10 < 2); return [rand(2, 30), b]; }, f: (a, b) => a * (b % 10) },
+  { id: "mulPlusSum", level: 2, name: "A × B + A + B", hint: "곱한 값에 무언가를 더해요.",
+    gen: () => [rand(2, 12), rand(2, 12)], f: (a, b) => a * b + a + b },
+  { id: "divisors", level: 3, name: "A의 약수 개수 + B의 약수 개수", hint: "각 수를 나누어떨어지게 하는 수를 모두 세어 보세요.",
+    gen: () => [rand(2, 60), rand(2, 60)], f: (a, b) => divCount(a) + divCount(b) },
+
+  // ===== 추가 창의형 =====
+  { id: "lastDigits", level: 1, kind: "creative", name: "A의 일의 자리 뒤에 B의 일의 자리를 붙임", hint: "두 수의 끝만 보세요.",
+    gen: () => { let a, b; do { a = rand(11, 99); b = rand(11, 99); } while (a % 10 === 0); return [a, b]; }, f: (a, b) => Number(`${a % 10}${b % 10}`) },
+  { id: "decoyRev", level: 2, kind: "creative", name: "A의 숫자 순서를 거꾸로 뒤집음 (B는 아무 의미 없음)", hint: "두 수가 모두 쓰이는 건 아닐 수도 있어요.",
+    gen: () => { let a; do { a = rand(12, 999); } while (a % 10 === 0 || String(a) === String(a).split("").reverse().join("")); return [a, rand(1, 99)]; },
+    f: (a, b) => rev(a) },
+  { id: "commonDigits", level: 2, kind: "creative", name: "두 수에 함께 들어 있는 숫자의 종류 수", hint: "두 수를 비교해서 겹치는 것을 찾아보세요.",
+    gen: () => { let a, b; do { a = rand(100, 999); b = rand(100, 999); } while (commonCount(a, b) === 0); return [a, b]; }, f: (a, b) => commonCount(a, b) },
+  { id: "repeatLen", level: 2, kind: "creative", name: "A를 B번 이어 썼을 때의 자릿수 (예: 12를 3번 → 121212 = 6자리)", hint: "앞의 수를 여러 번 적어 보세요.",
+    gen: () => [rand(1, 999), rand(2, 9)], f: (a, b) => String(a).length * b },
+  { id: "distinct", level: 2, kind: "creative", name: "두 수에 쓰인 숫자의 종류 수 (겹치면 한 번만)", hint: "같은 숫자는 한 번만 세요.",
+    gen: () => [rand(10, 999), rand(10, 999)], f: (a, b) => new Set(`${a}${b}`).size },
+  { id: "rotate", level: 3, kind: "creative", name: "A의 숫자를 B칸씩 오른쪽으로 돌림 (맨 끝 숫자가 맨 앞으로)", hint: "숫자들이 줄을 서서 자리를 옮겨요.",
+    gen: () => { let a, b; do { a = noZero(123, 999); b = rand(1, 8); } while (b % 3 === 0 || new Set(String(a)).size < 3); return [a, b]; },
+    f: (a, b) => { const s = String(a), k = b % s.length; return Number(k ? s.slice(-k) + s.slice(0, -k) : s); } },
+  { id: "roman", level: 3, kind: "creative", name: "두 수를 로마 숫자로 썼을 때 글자 수의 합 (예: 4 → IV = 2자)", hint: "시계나 영화 제목에 나오는 옛날 숫자를 떠올려 보세요.",
+    gen: () => [rand(1, 99), rand(1, 99)], f: (a, b) => romanLen(a) + romanLen(b) },
+  { id: "countDigit", level: 3, kind: "creative", name: "1부터 A까지 차례로 쓸 때 숫자 (B의 일의 자리)가 나오는 횟수", hint: "1, 2, 3, … 하고 쭉 적어 보세요.",
+    gen: () => [rand(10, 60), rand(1, 9)], f: (a, b) => { const d = String(b % 10); let c = 0; for (let n = 1; n <= a; n++) for (const ch of String(n)) if (ch === d) c++; return c; } },
+];
+
+// ===== 큰 수 지원: 단서는 최대 9자리(999,999,999)까지 정확하게 계산 =====
+function primePi(n) {
+  if (n < 2) return 0;
+  const r = Math.floor(Math.sqrt(n));
+  const lo = new Float64Array(r + 2), hi = new Float64Array(r + 2);
+  for (let i = 1; i <= r; i++) { lo[i] = i - 1; hi[i] = Math.floor(n / i) - 1; }
+  for (let p = 2; p <= r; p++) {
+    if (lo[p] === lo[p - 1]) continue;
+    const sp = lo[p - 1], p2 = p * p, lim = Math.min(r, Math.floor(n / p2));
+    for (let i = 1; i <= lim; i++) { const ip = i * p; hi[i] -= (ip <= r ? hi[ip] : lo[Math.floor(n / ip)]) - sp; }
+    for (let v = r; v >= p2; v--) lo[v] -= lo[Math.floor(v / p)] - sp;
+  }
+  return hi[1];
+}
+const modpow = (b, e, m) => { let r = 1 % m; b %= m; while (e > 0) { if (e & 1) r = (r * b) % m; b = (b * b) % m; e = Math.floor(e / 2); } return r; };
+function digitCount(n, d) {
+  let c = 0;
+  for (let p = 1; p <= n; p *= 10) {
+    const high = Math.floor(n / (p * 10)), cur = Math.floor(n / p) % 10, low = n % p;
+    if (d === 0) { if (high > 0) c += (high - 1) * p + (cur > 0 ? p : low + 1); }
+    else c += high * p + (cur > d ? p : cur === d ? low + 1 : 0);
+  }
+  return c;
+}
+const BI = BigInt;
+const BIG_F = {
+  mul: (a, b) => (BI(a) * BI(b)).toString(),
+  sq: (a, b) => (BI(a) * BI(a) + BI(b) * BI(b)).toString(),
+  mulMinusSum: (a, b) => (BI(a) * BI(b) - BI(a) - BI(b)).toString(),
+  mulPlusSum: (a, b) => (BI(a) * BI(b) + BI(a) + BI(b)).toString(),
+  sqdiff: (a, b) => (BI(a) * BI(a) - BI(b) * BI(b)).toString(),
+  lcm: (a, b) => (BI(a / gcd(a, b)) * BI(b)).toString(),
+  mulDigitSum: (a, b) => (BI(a) * BI(b)).toString().split("").reduce((s, d) => s + Number(d), 0),
+  rangeSum: (a, b) => { const lo = BI(Math.min(a, b)), hi = BI(Math.max(a, b)); return ((lo + hi) * (hi - lo + 1n) / 2n).toString(); },
+  primes: (a, b) => { const lo = Math.min(a, b), hi = Math.max(a, b); return hi - lo < 2 ? 0 : primePi(hi - 1) - primePi(lo); },
+  lastPow: (a, b) => modpow(a % 10, b, 10),
+  countDigit: (a, b) => digitCount(a, b % 10),
+};
+for (const r of RULES) if (BIG_F[r.id]) r.f = BIG_F[r.id];
+
+// ===== 배경지식이 필요한 규칙: 설정으로 켜고 끔, 끝나면 설명 =====
+const KNOW = {
+  binary: { hint: "수를 1, 2, 4, 8, 16… 같은 수들의 합으로 나눠 보세요. 몇 개가 필요할까요?",
+    learn: "2진수는 0과 1만 써서 수를 나타내요. 자리가 왼쪽으로 갈수록 1, 2, 4, 8, 16…이 돼요. 예: 5 = 4+1 → 101, 6 = 4+2 → 110, 7 = 4+2+1 → 111. 이 규칙은 그렇게 쓴 뒤 1을 세요. 1, 2, 4, 8… 중 몇 개를 더해야 그 수가 되는지 세는 것과 같아요." },
+  roman: { hint: "시계에 쓰이는 옛날 숫자(Ⅳ, Ⅸ, Ⅻ)를 떠올려 보세요. 4는 IV예요.",
+    learn: "로마 숫자는 I=1, V=5, X=10, L=50, C=100, D=500, M=1000을 이어 써요. 작은 글자가 큰 글자 앞에 오면 빼요. 예: 3 = III, 4 = IV, 9 = IX, 14 = XIV, 40 = XL, 99 = XCIX." },
+  english: { hint: "숫자를 영어 단어로 쓰고 알파벳을 세어 보세요. 12는 twelve(6자)예요.",
+    learn: "영어로 one, two, three, four, five, six, seven, eight, nine, ten, eleven, twelve, thirteen… twenty, thirty, forty, fifty, hundred처럼 써요. 21은 twentyone처럼 띄어쓰기와 하이픈(-)은 빼고 알파벳만 세요." },
+  primes: { hint: "1과 자기 자신으로만 나누어떨어지는 수(2, 3, 5, 7, 11…)를 두 수 사이에서 세어 보세요.",
+    learn: "소수는 1과 자기 자신으로만 나누어떨어지는 2 이상의 수예요: 2, 3, 5, 7, 11, 13, 17, 19, 23, 29, 31, 37, 41, 43, 47… 두 수 자신은 세지 않고 그 사이에 있는 소수만 세요." },
+};
+for (const r of RULES) if (KNOW[r.id]) Object.assign(r, { know: true }, KNOW[r.id]);
+const KNOW_KEY = "mystery-sign-know";
+const readKnow = () => { try { return localStorage.getItem(KNOW_KEY) === "1"; } catch (e) { return false; } };
+const writeKnow = v => { try { localStorage.setItem(KNOW_KEY, v ? "1" : "0"); } catch (e) {} };
+
+const POINTS = { 1: 5, 2: 7, 3: 10 };
+const HINT_COST = 2;
+const LEVEL_NAME = { 1: "쉬움", 2: "보통", 3: "어려움" };
+const SIGNS = ["◆", "▲", "■", "●", "★", "✚", "◐", "▼", "◈", "✦", "⊗", "✿", "◉", "⬟"];
+const kindOf = r => r.kind || "calc";
+const KIND_NAME = { calc: "연산형", creative: "창의형" };
+
+function shuffle(arr) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+const CALC_CACHE = new Map();
+const calc = (rule, a, b) => { const k = rule.id + ":" + a + ":" + b; let v = CALC_CACHE.get(k); if (v === undefined) { v = String(rule.f(a, b)); if (CALC_CACHE.size > 5000) CALC_CACHE.clear(); CALC_CACHE.set(k, v); } return v; };
+
+function makeRound(rule, sign) {
+  const q = rule.gen();
+  return { ruleId: rule.id, level: rule.level, sign, q, answer: calc(rule, q[0], q[1]),
+    clues: [], hintShown: false, wrong: 0, doubled: false, result: null, points: 0 };
+}
+
+function newGame(know = false) {
+  const pool = RULES.filter(r => know || !r.know);
+  // 난이도별 문제 수는 고정(쉬움 4 · 보통 4 · 어려움 3)
+  // 연산형은 판마다 4~6개(나머지는 창의형), 난이도마다 두 유형이 최소 1개씩
+  const LV_TOTAL = { 1: 4, 2: 4, 3: 3 };
+  const nCalc = rand(4, 6);
+  let calcBy;
+  do { calcBy = { 1: rand(1, 3), 2: rand(1, 3), 3: rand(1, 2) }; } while (calcBy[1] + calcBy[2] + calcBy[3] !== nCalc);
+  const picks = [];
+  for (const lv of [1, 2, 3]) {
+    picks.push(...shuffle(pool.filter(r => r.level === lv && kindOf(r) === "calc")).slice(0, calcBy[lv]));
+    picks.push(...shuffle(pool.filter(r => r.level === lv && kindOf(r) === "creative")).slice(0, LV_TOTAL[lv] - calcBy[lv]));
+  }
+  const signs = shuffle(SIGNS);
+  return shuffle(picks).map((r, i) => makeRound(r, signs[i]));
+}
+// ===== (rules:end) =====
+</script>
+
+<script>
+/* ===== Firebase 설정: Firebase 콘솔에서 받은 값을 아래에 붙여 넣으세요 ===== */
+const FB_CONFIG = {
+  apiKey: "AIzaSyD7CJmXxz8oj-xym2doMbib2JIekAS8tCg",
+  authDomain: "mystery-sign.firebaseapp.com",
+  projectId: "mystery-sign",
+  storageBucket: "mystery-sign.firebasestorage.app",
+  messagingSenderId: "741428545761",
+  appId: "1:741428545761:web:84689f655fdc2f16d64fa0",
+};
+/* ========================================================================== */
+const FB_VERSION = "10.12.2";
+const inviteLink = code => location.origin + location.pathname + "#" + code;
+const NAME_KEY = "mystery-sign-name";
+const readName = () => { try { return localStorage.getItem(NAME_KEY) || ""; } catch (e) { return ""; } };
+const writeName = v => { try { localStorage.setItem(NAME_KEY, v); } catch (e) {} };
+const cleanName = s => String(s || "").trim().slice(0, 12);
+const ruleById = id => RULES.find(r => r.id === id);
+const BEST_KEY = "mystery-sign-best-v2";
+const readBest = () => { try { return Number(localStorage.getItem(BEST_KEY)) || 0; } catch (e) { return 0; } };
+const writeBest = v => { try { localStorage.setItem(BEST_KEY, String(v)); } catch (e) {} };
+
+let S = { v: 2, phase: "start" };
+let M = null;            // 2인 게임 상태
+let msg = { text: "", bad: false };
+let flash = -1;
+const app = document.getElementById("app");
+const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+const sgn = s => s + "︎";
+const pipsHtml = lv => `<span class="pips">${[1, 2, 3].map(n => `<span class="${n <= lv ? "on" : ""}"></span>`).join("")}</span>`;
+const lenCls = n => (n > 22 ? " xl" : n > 13 ? " long" : "");
+const eqRow = (c, sign, isNew) => `<li class="eq${isNew ? " new" : ""}${lenCls(`${c[0]}${c[1]}${c[2]}`.length)}"><span class="l">${c[0]}</span><span class="s">${sgn(sign)}</span><span class="l">${c[1]}</span><span class="e">=</span><span class="r">${esc(c[2])}</span></li>`;
+const keypad = label => `<div class="pad">
+    ${[1, 2, 3, 4, 5, 6, 7, 8, 9].map(n => `<button class="key" data-k="${n}">${n}</button>`).join("")}
+    <button class="key del" data-k="del" aria-label="지우기">⌫</button>
+    <button class="key" data-k="0">0</button>
+    <button class="key go${label === "정답 제출" ? "" : " probe-go"}" data-k="ok">${label}</button>
+  </div>`;
+function clearHash() { try { if (location.hash) history.replaceState(null, "", location.pathname + location.search); } catch (e) {} }
+const parseCode = s => { let m = String(s || "").toLowerCase().replace(/[^a-z0-9]/g, ""); if (m.length === 7 && m[0] === "g") m = m.slice(1); return m.length === 6 ? "g-" + m : null; };
+
+/* ================= 처음 화면 ================= */
+function renderStart() {
+  const best = readBest();
+  app.innerHTML = `
+  <section class="hero">
+    <h1>미스터리<br><em>사인</em></h1>
+    <div class="demo" aria-label="예시">
+      <span>3 <span class="s">◆</span> 5 = 16</span>
+      <span>7 <span class="s">◆</span> 1 = 16</span>
+      <span>4 <span class="s">◆</span> 6 = <span class="q">?</span></span>
+    </div>
+    <p class="lede">기호 하나에 숨은 규칙을 찾아내세요. 처음엔 단서가 없어요. 두 수를 직접 넣어 보면 기호가 계산한 결과가 단서로 쌓여요. 규칙을 알아냈다면 문제의 답을 맞히세요.</p>
+    <div class="actions">
+      <div class="join nick">
+        <label for="nick">닉네임</label>
+        <input id="nick" autocomplete="nickname" maxlength="12" placeholder="둘이서 할 때 보여요" value="${esc(readName())}">
+      </div>
+      <label class="toggle" for="know"><input type="checkbox" id="know" ${readKnow() ? "checked" : ""}><span><b>배경지식 문제 포함</b><small>2진수 · 로마 숫자 · 영어 철자 · 소수처럼 미리 알아야 하는 규칙도 나와요. 둘이서 할 때는 방 만든 사람의 설정을 따라요.</small></span></label>
+      <button class="cta" id="solo">혼자 하기</button>
+      <button class="cta alt" id="host">친구와 하기 · 방 만들기</button>
+      <form class="join" id="joinform">
+        <label for="code">초대 코드</label>
+        <input id="code" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="예: g-k3m9qa" maxlength="10">
+        <button class="ghost" type="submit">참가</button>
+      </form>
+      ${msg.text ? `<p class="msg ${msg.bad ? "bad" : ""}" role="status">${esc(msg.text)}</p>` : ""}
+    </div>
+    <ul class="rules">
+      <li><b>유형</b><span>사칙연산뿐 아니라 숫자의 모양, 읽는 법, 시계, 자릿수 놀이처럼 생각을 비틀어야 풀리는 창의형 문제도 섞여 나와요.</span></li>
+      <li><b>점수</b><span>쉬움 5점 · 보통 7점 · 어려움 10점에서 시작해 단서가 하나 늘 때마다 −1점. 맞히면 최소 1점.</span></li>
+      <li><b>오답</b><span>틀릴 때마다 −1점. 한 라운드에 3번까지 틀릴 수 있어요.</span></li>
+      <li><b>혼자</b><span>단서 두 수를 모두 직접 정해요. 규칙 귀띔(−2점)과 DOUBLE(점수 2배, 1회)을 쓸 수 있어요.</span></li>
+      <li><b>둘이서</b><span>단서마다 앞 숫자와 뒷 숫자를 한 명씩 정하고, 다음 단서에선 역할을 바꿔요. 답은 누구든 먼저 맞히면 점수를 가져가요.</span></li>
+    </ul>
+    ${best ? `<p class="best">혼자 하기 최고 기록 ${best}점</p>` : ""}
+  </section>`;
+  document.getElementById("nick").oninput = e => writeName(cleanName(e.target.value));
+  document.getElementById("know").onchange = e => writeKnow(e.target.checked);
+  document.getElementById("solo").onclick = startSolo;
+  document.getElementById("host").onclick = createGame;
+  document.getElementById("joinform").onsubmit = e => {
+    e.preventDefault();
+    const code = parseCode(document.getElementById("code").value);
+    if (!code) { msg = { text: "코드는 g- 뒤에 영문·숫자 6자리예요.", bad: true }; render(); return; }
+    msg = { text: "", bad: false };
+    openGame(code);
+  };
+}
+
+/* ================= 혼자 하기 ================= */
+function maxScore() { return S.rounds.reduce((s, r) => s + POINTS[r.level], 0); }
+function cur() { return S.rounds[S.idx]; }
+function reward(r) { return Math.max(1, POINTS[r.level] - r.clues.length - (r.hintShown ? HINT_COST : 0)); }
+function resetFields() { S.f = { a: "", b: "", ans: "" }; S.active = "a"; }
+
+function startSolo() {
+  clearHash();
+  S = { v: 2, phase: "play", rounds: newGame(readKnow()), know: readKnow(), idx: 0, score: 0, doubleUsed: false };
+  resetFields();
+  msg = { text: "", bad: false };
+  render();
+}
+
+function slot(name, label, value, active) {
+  return `<button class="slot${active ? " active" : ""}${value ? "" : " empty"}" data-slot="${name}" aria-label="${label}${value ? " " + value : ""}" aria-pressed="${active}">${esc(value)}</button>`;
+}
+
+function renderPlay() {
+  const r = cur();
+  const rule = ruleById(r.ruleId);
+  const track = S.rounds.map((x, i) => `<i class="${x.result === "correct" ? "ok" : x.result ? "no" : i === S.idx ? "now" : ""}"></i>`).join("");
+  const mult = r.doubled ? 2 : 1;
+  const done = !!r.result;
+  const clueMode = S.active !== "ans";
+  const rows = r.clues.length
+    ? `<ul class="ex">${r.clues.map((c, i) => eqRow(c, r.sign, i === flash)).join("")}</ul>`
+    : `<p class="empty-note">아직 단서가 없어요. 아래 단서 칸에 두 수를 넣고 <b>단서 보기</b>를 눌러 보세요.</p>`;
+  app.innerHTML = `
+  <header class="bar">
+    <button class="back" id="leave">처음으로</button>
+    <span class="round">ROUND <b>${S.idx + 1}</b> / ${S.rounds.length}</span>
+    <span class="score"><small>점수</small>${S.score}</span>
+  </header>
+  <div class="track" aria-hidden="true">${track}</div>
+  <section class="card" id="card">
+    <div class="meta">
+      <span class="level">${pipsHtml(r.level)}${LEVEL_NAME[r.level]}${rule.know ? `<span class="kbadge">배경지식</span>` : ""}</span>
+      <span class="worth">단서 ${r.clues.length}개 · 지금 맞히면 +${reward(r) * mult}점${r.doubled ? " (DOUBLE)" : ""}</span>
+    </div>
+    ${rows}
+    ${r.hintShown ? `<div class="hintline">귀띔: ${esc(rule.hint)}</div>` : ""}
+    <div class="probe">
+      <span class="tag">단서</span>
+      <div class="line">${slot("a", "단서 첫 번째 수", S.f.a, S.active === "a")}<span class="s">${sgn(r.sign)}</span>${slot("b", "단서 두 번째 수", S.f.b, S.active === "b")}<span class="e">=</span><span class="e">?</span></div>
+    </div>
+    <div class="probe quest">
+      <span class="tag">문제</span>
+      <div class="line"><span class="l">${r.q[0]}</span><span class="s big-s">${sgn(r.sign)}</span><span class="l">${r.q[1]}</span><span class="e">=</span>${slot("ans", "정답", S.f.ans, S.active === "ans")}</div>
+    </div>
+  </section>
+  <p class="msg ${msg.bad ? "bad" : ""}" role="status">${esc(msg.text)}</p>
+  ${keypad(clueMode ? "단서 보기" : "정답 제출")}
+  <div class="tools">
+    <button class="tool" id="t-hint" ${r.hintShown || done ? "disabled" : ""}>규칙 귀띔<small>−${HINT_COST}점</small></button>
+    <button class="tool double ${r.doubled ? "armed" : ""}" id="t-double" ${S.doubleUsed || done || r.wrong > 0 ? "disabled" : ""}>DOUBLE<small>${r.doubled ? "이번 라운드 적용" : S.doubleUsed ? "사용함" : "1회 · 점수 2배"}</small></button>
+    <button class="tool" id="t-give" ${done ? "disabled" : ""}>포기<small>정답 보기</small></button>
+  </div>
+  ${done ? soloSheet(r, rule) : ""}`;
+  flash = -1;
+
+  app.querySelectorAll(".key").forEach(b => b.onclick = () => press(b.dataset.k));
+  app.querySelectorAll("[data-slot]").forEach(b => b.onclick = () => { S.active = b.dataset.slot; msg = { text: "", bad: false }; render(); });
+  document.getElementById("leave").onclick = () => { S = { v: 2, phase: "start" }; msg = { text: "", bad: false }; render(); };
+  document.getElementById("t-hint").onclick = () => { r.hintShown = true; msg = { text: "", bad: false }; render(); };
+  document.getElementById("t-double").onclick = () => { r.doubled = true; S.doubleUsed = true; msg = { text: "DOUBLE을 켰어요. 이번 라운드는 점수가 2배예요.", bad: false }; render(); };
+  document.getElementById("t-give").onclick = () => finishRound("give");
+  const next = document.getElementById("next");
+  if (next) { next.onclick = nextRound; next.focus(); }
+  const list = app.querySelector(".ex");
+  if (list) list.scrollTop = list.scrollHeight;
+}
+
+function soloSheet(r, rule) {
+  const ok = r.result === "correct";
+  const title = ok ? "정답!" : r.result === "give" ? "포기했어요" : "기회를 다 썼어요";
+  const last = S.idx === S.rounds.length - 1;
+  const deltaTxt = r.points > 0 ? `+${r.points}점` : r.points < 0 ? `${r.points}점` : "0점";
+  return sheet(title, ok, r, rule, `이번 라운드 ${deltaTxt}`, `사용한 단서 ${r.clues.length}개`, last ? "최종 결과 보기" : "다음 라운드");
+}
+
+function sheet(title, ok, r, rule, deltaTxt, sub, btn) {
+  return `
+  <div class="sheet-wrap">
+    <div class="sheet" role="dialog" aria-label="라운드 결과">
+      <div class="verdict ${ok ? "ok" : "no"}">${esc(title)}</div>
+      <div class="delta">${r.q[0]} ${sgn(r.sign)} ${r.q[1]} = ${esc(r.answer)} <span style="color:var(--muted);font-weight:500">· ${esc(deltaTxt)}</span></div>
+      <div class="rule-name"><span class="kind">${KIND_NAME[kindOf(rule)]}</span> ${esc(rule.name)}</div>
+      ${rule.learn ? `<div class="learn"><b>알아두기</b>${esc(rule.learn)}</div>` : ""}
+      <div class="rule-ex">${esc(sub)}${r.clues.length ? "<br>" + r.clues.slice(-3).map(c => `${c[0]} ${sgn(r.sign)} ${c[1]} = ${esc(c[2])}`).join("<br>") : ""}</div>
+      ${btn ? `<button class="cta" id="next">${esc(btn)}</button>` : `<p class="best">상대가 다음 라운드로 넘어가기를 기다리는 중…</p>`}
+    </div>
+  </div>`;
+}
+
+function renderEnd() {
+  const max = maxScore();
+  const best = readBest();
+  const isBest = S.score > best;
+  if (isBest && !S.saved) { writeBest(S.score); S.saved = true; }
+  const correct = S.rounds.filter(r => r.result === "correct").length;
+  const clues = S.rounds.reduce((s, r) => s + r.clues.length, 0);
+  const pct = S.score / max;
+  const rank = pct >= 0.6 ? "지니어스" : pct >= 0.4 ? "날카로운 추리력" : pct >= 0.2 ? "가능성 있는 플레이어" : "연습이 필요해요";
+  app.innerHTML = `
+  <section class="hero" style="padding-top:2vh">
+    <h2 class="title-sm">${rank}</h2>
+    <div class="big">${S.score}<small> / ${max}점</small></div>
+    <p class="lede">11문제 중 ${correct}문제를 맞혔고, 단서를 모두 ${clues}개 썼어요.${isBest ? " 최고 기록을 새로 세웠어요." : best ? ` 최고 기록은 ${best}점이에요.` : ""}</p>
+    <ul class="summary">
+      ${S.rounds.map((r, i) => {
+        const rule = ruleById(r.ruleId);
+        const cls = r.points > 0 ? "ok" : r.points < 0 ? "no" : "";
+        return `<li><span class="n">${String(i + 1).padStart(2, "0")}</span><span>${esc(rule.name)}<br><span class="lv">${LEVEL_NAME[r.level]} · 단서 ${r.clues.length}개 · ${r.q[0]} ${sgn(r.sign)} ${r.q[1]} = ${esc(r.answer)}${r.doubled ? " · DOUBLE" : ""}</span></span><span class="p ${cls}">${r.points > 0 ? "+" : ""}${r.points}</span></li>`;
+      }).join("")}
+    </ul>
+    <button class="cta" id="again">새 문제로 다시 하기</button>
+    <button class="ghost" id="home">처음으로</button>
+  </section>`;
+  document.getElementById("again").onclick = startSolo;
+  document.getElementById("home").onclick = () => { S = { v: 2, phase: "start" }; render(); };
+}
+
+function say(text, bad) { msg = { text, bad: !!bad }; render(); }
+
+function soloPress(k) {
+  const r = cur();
+  if (!r || r.result) return;
+  if (k === "ok") return S.active === "ans" ? submit() : probe();
+  const name = S.active;
+  const limit = name === "ans" ? 20 : 9;
+  let v = S.f[name];
+  if (k === "del") v = v.slice(0, -1);
+  else if (v.length < limit) v = (v === "0" ? "" : v) + k;
+  S.f[name] = v;
+  const el = app.querySelector(`[data-slot="${name}"]`);
+  el.textContent = v;
+  el.classList.toggle("empty", !v);
+  if (msg.text) { msg = { text: "", bad: false }; app.querySelector(".msg").textContent = ""; }
+}
+
+function badPair(r, a, b) {
+  const rule = ruleById(r.ruleId);
+  if (a === r.q[0] && b === r.q[1]) return true;
+  return a === r.q[1] && b === r.q[0] && calc(rule, a, b) === r.answer;
+}
+
+function probe() {
+  const r = cur();
+  const rule = ruleById(r.ruleId);
+  if (!S.f.a) { S.active = "a"; return say("단서로 쓸 첫 번째 수를 입력해 주세요.", true); }
+  if (!S.f.b) { S.active = "b"; return say("두 번째 수를 입력한 뒤 단서 보기를 눌러 주세요.", false); }
+  const a = Number(S.f.a), b = Number(S.f.b);
+  if (a < 1 || b < 1) return say("단서에는 1부터 999,999,999까지의 수를 넣어 주세요.", true);
+  if (badPair(r, a, b)) { resetFields(); return say("문제와 같은 식은 단서로 쓸 수 없어요.", true); }
+  const dup = r.clues.findIndex(c => c[0] === a && c[1] === b);
+  if (dup >= 0) { resetFields(); flash = dup; return say("이미 확인한 단서예요. 점수는 줄지 않았어요.", false); }
+  r.clues.push([a, b, calc(rule, a, b)]);
+  flash = r.clues.length - 1;
+  resetFields();
+  say("단서를 확인했어요 (이 라운드 점수 −1).", false);
+}
+
+function submit() {
+  const r = cur();
+  if (!S.f.ans) return say("답을 입력한 뒤 정답 제출을 눌러 주세요.", true);
+  const mult = r.doubled ? 2 : 1;
+  if (S.f.ans === r.answer) {
+    const gain = reward(r) * mult;
+    r.points += gain; S.score += gain;
+    return finishRound("correct");
+  }
+  r.wrong++;
+  r.points -= mult; S.score -= mult;
+  S.f.ans = "";
+  if (r.wrong >= 3) return finishRound("fail");
+  say(`틀렸어요 (−${mult}점). 남은 기회 ${3 - r.wrong}번`, true);
+  document.getElementById("card").classList.add("shake");
+}
+
+function finishRound(result) { cur().result = result; msg = { text: "", bad: false }; render(); }
+
+function nextRound() {
+  if (S.idx >= S.rounds.length - 1) { S.phase = "end"; render(); window.scrollTo(0, 0); return; }
+  S.idx++;
+  resetFields();
+  msg = { text: "", bad: false };
+  render();
+  window.scrollTo(0, 0);
+}
+
+/* ================= 둘이서 (공유 링크) ================= */
+const NOPERM = "Firebase 보안 규칙이 기록을 막고 있어요. Firestore 규칙을 안내대로 넣었는지 확인해 주세요.";
+const NODB = "Firebase에 연결하지 못했어요. index.html의 FB_CONFIG 값과, Firebase에서 익명 로그인을 켰는지 확인해 주세요.";
+const validN = n => Number.isInteger(n) && n >= 1 && n <= 999999999;
+
+function reduce(game, moves) {
+  const host = game.host;
+  const st = {
+    players: [host, null], scores: {}, idx: 0, ended: false, rematch: null, names: { [host]: cleanName(game.hostName) },
+    rounds: (game.rounds || []).map(r => ({ ...r, clues: [], pendingA: null, wrong: {}, result: null, winner: null, points: 0, skip: [], log: [] })),
+  };
+  st.scores[host] = 0;
+  const sorted = moves.slice().sort((x, y) => ((Number(x.seq) || 0) - (Number(y.seq) || 0)) || ((Number(x.t) || 0) - (Number(y.t) || 0)) || (x.id < y.id ? -1 : 1));
+  for (const m of sorted) {
+    const by = m.by;
+    if (m.type === "join") {
+      if (!st.players[1] && typeof by === "string" && by !== host) { st.players[1] = by; st.scores[by] = 0; st.names[by] = cleanName(m.name); }
+      continue;
+    }
+    if (!st.players[1] || !st.players.includes(by)) continue;
+    if (m.type === "rematch") { if (st.ended && parseCode(m.code)) st.rematch = { code: parseCode(m.code), by }; continue; }
+    if (st.ended) continue;
+    const r = st.rounds[st.idx];
+    if (!r || m.round !== st.idx) continue;
+    const other = st.players[0] === by ? st.players[1] : st.players[0];
+    const aP = st.players[(r.clues.length + st.idx) % 2];
+    if (m.type === "next") {
+      if (r.result) { if (st.idx >= st.rounds.length - 1) st.ended = true; else st.idx++; }
+      continue;
+    }
+    if (r.result) continue;
+    if (m.type === "a") {
+      if (by === aP && r.pendingA === null && validN(m.n)) r.pendingA = { n: m.n, by };
+    } else if (m.type === "b") {
+      if (r.pendingA === null || by === r.pendingA.by || !validN(m.n)) continue;
+      const a = r.pendingA.n, b = m.n;
+      if (badPair(r, a, b) || r.clues.some(c => c[0] === a && c[1] === b)) continue;
+      r.clues.push([a, b, calc(ruleById(r.ruleId), a, b), r.pendingA.by, by]);
+      r.pendingA = null;
+    } else if (m.type === "ans") {
+      const v = String(m.v || "");
+      if (!/^\d{1,20}$/.test(v) || (r.wrong[by] || 0) >= 3) continue;
+      if (v === r.answer) {
+        const gain = Math.max(1, POINTS[r.level] - r.clues.length);
+        st.scores[by] += gain; r.points = gain; r.winner = by; r.result = "correct";
+        r.log.push({ kind: "right", by, v, gain });
+      } else {
+        r.wrong[by] = (r.wrong[by] || 0) + 1;
+        st.scores[by] -= 1;
+        r.log.push({ kind: "wrong", by, v });
+        if ((r.wrong[by] || 0) >= 3 && (r.wrong[other] || 0) >= 3) r.result = "fail";
+      }
+    } else if (m.type === "skip") {
+      if (!r.skip.includes(by)) { r.skip.push(by); r.log.push({ kind: "skip", by }); }
+      if (r.skip.length >= 2) r.result = "skip";
+    }
+  }
+  return st;
+}
+
+function nameOf(id) {
+  if (!M) return "";
+  if (id === M.me) return "나";
+  return (M.st && M.st.names[id]) || (id === M.game?.host ? "방장" : "상대");
+}
+
+let FB = null;
+const mapErr = e => ({ code: e && e.code === "permission-denied" ? "invalid_argument" : e && e.code === "resource-exhausted" ? "quota_exceeded" : "unavailable", message: String(e && e.message) });
+function makeDb(F, fs) {
+  const wrap = p => p.catch(e => { throw mapErr(e); });
+  return {
+    doc: path => ({
+      set: data => wrap(F.setDoc(F.doc(fs, path), data)),
+      onSnapshot: (next, err) => F.onSnapshot(F.doc(fs, path), { includeMetadataChanges: true },
+        s => next({ exists: s.exists(), data: () => s.data(), metadata: s.metadata }), e => err && err(mapErr(e))),
+    }),
+    collection: path => ({
+      doc: () => ({ set: data => wrap(F.addDoc(F.collection(fs, path), data)) }),
+      onSnapshot: (next, err) => F.onSnapshot(F.collection(fs, path), { includeMetadataChanges: true },
+        qs => next({ docs: qs.docs.map(d => ({ id: d.id, data: () => d.data() })), metadata: qs.metadata }), e => err && err(mapErr(e))),
+    }),
+  };
+}
+async function getCaps() {
+  if (FB) return FB;
+  if (!FB_CONFIG.apiKey || !FB_CONFIG.projectId) return { db: null, user: null, me: null };
+  try {
+    const base = `https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
+    const [App, Auth, F] = await Promise.all([import(base + "firebase-app.js"), import(base + "firebase-auth.js"), import(base + "firebase-firestore.js")]);
+    const app = App.initializeApp(FB_CONFIG);
+    const cred = await Auth.signInAnonymously(Auth.getAuth(app));
+    FB = { db: makeDb(F, F.getFirestore(app)), user: null, me: cred.user.uid };
+    return FB;
+  } catch (e) {
+    console.error(e);
+    return { db: null, user: null, me: null };
+  }
+}
+
+async function createGame() {
+  msg = { text: "방을 만드는 중…", bad: false }; render();
+  const { db, me } = await getCaps();
+  if (!db || !me) return say(NODB, true);
+  const abc = "abcdefghjkmnpqrstuvwxyz23456789";
+  const code = "g-" + Array.from({ length: 6 }, () => abc[Math.floor(Math.random() * abc.length)]).join("");
+  const rounds = newGame(readKnow()).map(r => ({ ruleId: r.ruleId, level: r.level, sign: r.sign, q: r.q, answer: r.answer }));
+  try {
+    await db.doc("games/" + code).set({ v: 1, host: me, hostName: cleanName(readName()), know: readKnow(), rounds, createdAt: Date.now() });
+  } catch (e) {
+    return say(e && e.code === "invalid_argument" ? NOPERM : e && e.code === "quota_exceeded" ? "저장 공간이 가득 차서 방을 만들 수 없어요." : "방을 만들지 못했어요. 잠시 뒤 다시 눌러 주세요.", true);
+  }
+  msg = { text: "", bad: false };
+  return code === M?.code ? null : openGame(code);
+}
+
+async function openGame(code) {
+  if (M && M.code === code) return;
+  closeGame();
+  S = { v: 2, phase: "multi" };
+  M = { code, me: null, db: null, user: null, game: null, gDef: false, moves: [], mDef: false, st: null,
+        f: { clue: "", ans: "" }, active: "ans", busy: false, err: "", note: "", names: {}, joinSent: false, turnKey: "", unsubs: [] };
+  try { if (location.hash !== "#" + code) location.hash = code; } catch (e) {}
+  render();
+  const mine = M;
+  const { db, user, me } = await getCaps();
+  if (M !== mine) return;
+  if (!db || !me) { M.err = NODB; render(); return; }
+  Object.assign(M, { db, user, me });
+  M.timer = setTimeout(() => { if (M === mine && !M.gDef) { M.note = "게임 정보를 아직 불러오지 못했어요. 연결 상태를 확인해 주세요."; render(); } }, 10000);
+  const onErr = e => { if (M !== mine) return; clearTimeout(M.timer); M.err = e && e.code === "revoked" ? "이 페이지에 대한 접근 권한이 바뀌었어요." : "게임을 불러오는 중 문제가 생겼어요. 처음으로 돌아가 다시 열어 주세요."; render(); };
+  M.unsubs.push(db.doc("games/" + code).onSnapshot(s => {
+    if (M !== mine) return;
+    M.game = s.exists ? s.data() : null;
+    if (!s.metadata.fromCache) { M.gDef = true; clearTimeout(M.timer); M.note = ""; }
+    update();
+  }, onErr));
+  M.unsubs.push(db.collection("games/" + code + "/moves").onSnapshot(s => {
+    if (M !== mine) return;
+    M.moves = s.docs.map(d => ({ id: d.id, ...d.data() }));
+    if (!s.metadata.fromCache) M.mDef = true;
+    update();
+  }, onErr));
+}
+
+function closeGame() {
+  if (!M) return;
+  clearTimeout(M.timer);
+  M.unsubs.forEach(u => { try { u(); } catch (e) {} });
+  M = null;
+}
+
+function leaveGame() { closeGame(); clearHash(); S = { v: 2, phase: "start" }; msg = { text: "", bad: false }; render(); }
+
+async function update() {
+  if (!M) return;
+  M.st = M.game && Array.isArray(M.game.rounds) ? reduce(M.game, M.moves) : null;
+  const st = M.st;
+  if (st && !st.players[1] && M.me !== M.game.host && M.gDef && M.mDef && !M.joinSent) {
+    M.joinSent = true;
+    send("join", { name: cleanName(readName()) });
+  }
+  if (st) {
+    // 내 단서 차례가 새로 오면 단서 칸으로 이동
+    const r = st.rounds[st.idx];
+    const key = r ? `${st.idx}:${r.clues.length}:${r.pendingA ? 1 : 0}` : "";
+    if (key !== M.turnKey) {
+      M.turnKey = key;
+      M.f.clue = "";
+      if (myClueTurn(st) && !M.f.ans) M.active = "clue";
+    }
+    if (st.idx !== M.lastIdx) { M.lastIdx = st.idx; M.f.ans = ""; M.active = myClueTurn(st) ? "clue" : "ans"; }
+  }
+  render();
+}
+
+function myClueTurn(st) {
+  const r = st.rounds[st.idx];
+  if (!r || r.result || !st.players[1] || !st.players.includes(M.me)) return false;
+  const aP = st.players[(r.clues.length + st.idx) % 2];
+  return r.pendingA === null ? aP === M.me : r.pendingA.by !== M.me;
+}
+
+async function send(type, extra) {
+  if (!M || !M.db || M.busy) return;
+  const mine = M;
+  M.busy = true;
+  render();
+  const body = { type, by: M.me, t: Date.now(), seq: M.moves.length, ...extra };
+  if (M.st && type !== "join" && type !== "rematch") body.round = M.st.idx;
+  try {
+    await M.db.collection("games/" + M.code + "/moves").doc().set(body);
+  } catch (e) {
+    if (M === mine) M.err = e && e.code === "invalid_argument" ? NOPERM : e && e.code === "quota_exceeded" ? "저장 공간이 가득 찼어요. 더 이상 기록할 수 없어요." : "";
+    if (M === mine && !M.err) M.note = "전송하지 못했어요. 다시 눌러 주세요.";
+  }
+  if (M === mine) { M.busy = false; render(); }
+}
+
+function multiPress(k) {
+  const st = M.st;
+  const r = st && st.rounds[st.idx];
+  if (!r || r.result || M.busy || !st.players.includes(M.me)) return;
+  if (M.active === "clue" && !myClueTurn(st)) M.active = "ans";
+  if (k === "ok") return M.active === "ans" ? multiAnswer() : multiClue();
+  const name = M.active;
+  if (name === "ans" && (r.wrong[M.me] || 0) >= 3) return;
+  const limit = name === "ans" ? 20 : 9;
+  let v = M.f[name];
+  if (k === "del") v = v.slice(0, -1);
+  else if (v.length < limit) v = (v === "0" ? "" : v) + k;
+  M.f[name] = v;
+  M.note = "";
+  const el = app.querySelector(`[data-slot="${name}"]`);
+  if (el) { el.textContent = v; el.classList.toggle("empty", !v); }
+  const m = app.querySelector(".msg"); if (m) { m.textContent = ""; m.classList.remove("bad"); }
+}
+
+function multiClue() {
+  const st = M.st, r = st.rounds[st.idx];
+  const n = Number(M.f.clue);
+  if (!M.f.clue || !validN(n)) { M.note = "1부터 999,999,999까지의 수를 넣어 주세요."; return render(); }
+  if (r.pendingA === null) return send("a", { n });
+  const a = r.pendingA.n;
+  if (badPair(r, a, n)) { M.note = "문제와 같은 식이 되는 수는 낼 수 없어요."; M.f.clue = ""; return render(); }
+  if (r.clues.some(c => c[0] === a && c[1] === n)) { M.note = "이미 있는 단서예요. 다른 수를 내 주세요."; M.f.clue = ""; return render(); }
+  send("b", { n });
+}
+
+function multiAnswer() {
+  const st = M.st, r = st.rounds[st.idx];
+  if ((r.wrong[M.me] || 0) >= 3) { M.note = "이번 라운드에는 더 답할 기회가 없어요."; return render(); }
+  if (!M.f.ans) { M.note = "답을 입력한 뒤 정답 제출을 눌러 주세요."; return render(); }
+  const v = M.f.ans;
+  M.f.ans = "";
+  send("ans", { v });
+}
+
+async function rematch() {
+  const old = M;
+  const { db, me } = old;
+  const abc = "abcdefghjkmnpqrstuvwxyz23456789";
+  const code = "g-" + Array.from({ length: 6 }, () => abc[Math.floor(Math.random() * abc.length)]).join("");
+  const rounds = newGame(!!old.game.know).map(r => ({ ruleId: r.ruleId, level: r.level, sign: r.sign, q: r.q, answer: r.answer }));
+  try {
+    await db.doc("games/" + code).set({ v: 1, host: me, hostName: cleanName(readName()), know: !!old.game.know, rounds, createdAt: Date.now() });
+    await db.collection("games/" + old.code + "/moves").doc().set({ type: "rematch", code, by: me, t: Date.now(), seq: old.moves.length });
+  } catch (e) { old.note = "새 게임을 만들지 못했어요. 다시 눌러 주세요."; return render(); }
+  openGame(code);
+}
+
+function inviteBox() {
+  const link = inviteLink(M.code);
+  return `
+    <div class="invite">
+      <span class="tag">초대 링크</span>
+      <code class="link" id="link">${esc(link)}</code>
+      <div class="row2">
+        <button class="cta" id="copy">링크 복사</button>
+        <span class="codechip">코드 <b>${esc(M.code)}</b></span>
+      </div>
+    </div>`;
+}
+
+function renderMulti() {
+  if (!M) return renderStart();
+  const st = M.st;
+  const head = (inner = "") => `<header class="bar"><button class="back" id="leave">나가기</button>${inner}</header>`;
+  const wire = () => {
+    const l = document.getElementById("leave"); if (l) l.onclick = leaveGame;
+    const c = document.getElementById("copy");
+    if (c) c.onclick = () => {
+      const link = inviteLink(M.code);
+      const done = ok => { M.note = ok ? "링크를 복사했어요. 친구에게 보내 주세요." : "복사가 막혀 있어요. 위 링크를 길게 눌러 복사해 주세요."; render(); };
+      try { navigator.clipboard.writeText(link).then(() => done(true), () => done(false)); } catch (e) { done(false); }
+    };
+  };
+  if (M.err) {
+    app.innerHTML = `${head()}<section class="hero"><h2 class="title-sm">둘이서 하기</h2><p class="lede">${esc(M.err)}</p><button class="cta" id="home">처음으로</button></section>`;
+    wire(); document.getElementById("home").onclick = leaveGame; return;
+  }
+  if (!M.game) {
+    const missing = M.gDef;
+    app.innerHTML = `${head()}<section class="hero"><h2 class="title-sm">${missing ? "방을 찾을 수 없어요" : "방에 들어가는 중…"}</h2><p class="lede">${missing ? `코드 ${esc(M.code)}로 만든 방이 없어요. 코드를 다시 확인해 주세요.` : esc(M.note || "잠시만 기다려 주세요.")}</p>${missing ? `<button class="cta" id="home">처음으로</button>` : ""}</section>`;
+    wire(); const h = document.getElementById("home"); if (h) h.onclick = leaveGame; return;
+  }
+  if (!st.players[1]) {
+    const isHost = M.me === M.game.host;
+    app.innerHTML = `${head()}<section class="hero wait">
+      <h2 class="title-sm">${isHost ? "친구를 기다리는 중" : "방에 참가하는 중…"}</h2>
+      ${isHost ? `<p class="lede">친구가 이 링크를 열면 바로 시작해요. 친구는 처음 화면에서 코드를 입력해도 돼요.</p>${inviteBox()}` : `<p class="lede">${esc(M.note || "잠시만 기다려 주세요.")}</p>`}
+      ${M.note && isHost ? `<p class="msg" role="status">${esc(M.note)}</p>` : ""}
+      <p class="best">배경지식 문제 ${M.game.know ? "포함" : "제외"}</p>
+      <div class="pulse" aria-hidden="true"><i></i><i></i><i></i></div>
+    </section>`;
+    wire(); return;
+  }
+  const spectator = !st.players.includes(M.me);
+  const [p0, p1] = st.players;
+  const scoreChip = id => `<span class="chip${id === M.me ? " me" : ""}"><span class="who">${esc(nameOf(id))}</span><b>${st.scores[id] ?? 0}</b></span>`;
+  if (st.ended) return renderMultiEnd(head, wire, spectator);
+
+  const r = st.rounds[st.idx];
+  const rule = ruleById(r.ruleId);
+  const opp = p0 === M.me ? p1 : p0;
+  const track = st.rounds.map((x, i) => `<i class="${x.result ? (x.winner === M.me ? "ok" : x.winner ? "no" : "") : i === st.idx ? "now" : ""}"></i>`).join("");
+  const aP = st.players[(r.clues.length + st.idx) % 2];
+  const bP = aP === p0 ? p1 : p0;
+  const myTurn = !spectator && myClueTurn(st);
+  if (M.active === "clue" && !myTurn) M.active = "ans";
+  const outOfTries = (r.wrong[M.me] || 0) >= 3;
+
+  let aCell, bCell, status;
+  if (r.pendingA === null) {
+    aCell = aP === M.me && !spectator ? slot("clue", "단서 앞 숫자", M.f.clue, M.active === "clue") : `<span class="fixed wait-dot">…</span>`;
+    bCell = `<span class="fixed muted">·</span>`;
+    status = aP === M.me ? "내 차례: 단서의 <b>앞 숫자</b>를 내 주세요." : `${esc(nameOf(aP))} 차례 · 앞 숫자를 고르는 중…`;
+  } else {
+    aCell = `<span class="fixed">${r.pendingA.n}</span>`;
+    bCell = bP === M.me && !spectator ? slot("clue", "단서 뒷 숫자", M.f.clue, M.active === "clue") : `<span class="fixed wait-dot">…</span>`;
+    status = bP === M.me ? `앞 숫자는 <b>${r.pendingA.n}</b>. 이제 내가 <b>뒷 숫자</b>를 낼 차례예요.` : `${esc(nameOf(bP))} 차례 · 뒷 숫자를 고르는 중…`;
+  }
+  const rows = r.clues.length
+    ? `<ul class="ex">${r.clues.map(c => eqRow(c, r.sign, false)).join("")}</ul>`
+    : `<p class="empty-note">아직 단서가 없어요. 한 명이 앞 숫자, 다른 한 명이 뒷 숫자를 내면 단서가 하나 생겨요. 다음 단서에선 역할이 바뀌어요.</p>`;
+  const lastLog = r.log.slice(-2).map(l => {
+    const who = esc(nameOf(l.by));
+    if (l.kind === "wrong") return `<span class="bad">${who} 오답 ${esc(l.v)} (−1점)</span>`;
+    if (l.kind === "skip") return `${who}: 넘어가기에 찬성`;
+    return "";
+  }).filter(Boolean).join(" · ");
+  const doneSheet = r.result ? multiSheet(r, rule, st) : "";
+
+  app.innerHTML = `
+  ${head(`<span class="round">ROUND <b>${st.idx + 1}</b> / ${st.rounds.length}</span>`)}
+  <div class="scoreboard">${scoreChip(spectator ? p0 : M.me)}<span class="vs">vs</span>${scoreChip(spectator ? p1 : opp)}</div>
+  <div class="track" aria-hidden="true">${track}</div>
+  <section class="card" id="card">
+    <div class="meta">
+      <span class="level">${pipsHtml(r.level)}${LEVEL_NAME[r.level]}${rule.know ? `<span class="kbadge">배경지식</span>` : ""}</span>
+      <span class="worth">단서 ${r.clues.length}개 · 먼저 맞히면 +${Math.max(1, POINTS[r.level] - r.clues.length)}점</span>
+    </div>
+    ${rows}
+    <div class="turn${myTurn ? " mine" : ""}">${spectator ? "관전 중이에요." : status}</div>
+    <div class="probe">
+      <span class="tag">단서</span>
+      <div class="line">${aCell}<span class="s">${sgn(r.sign)}</span>${bCell}<span class="e">=</span><span class="e">?</span></div>
+    </div>
+    <div class="probe quest">
+      <span class="tag">문제</span>
+      <div class="line"><span class="l">${r.q[0]}</span><span class="s big-s">${sgn(r.sign)}</span><span class="l">${r.q[1]}</span><span class="e">=</span>${spectator ? `<span class="fixed muted">?</span>` : outOfTries ? `<span class="fixed muted small">기회 없음</span>` : slot("ans", "정답", M.f.ans, M.active === "ans")}</div>
+    </div>
+  </section>
+  <p class="msg ${M.note ? "bad" : ""}" role="status">${M.note ? esc(M.note) : lastLog || (M.busy ? "보내는 중…" : `남은 답 기회 ${Math.max(0, 3 - (r.wrong[M.me] || 0))}번`)}</p>
+  ${spectator ? "" : keypad(M.active === "clue" ? (r.pendingA === null ? "앞 숫자 내기" : "뒷 숫자 내기") : "정답 제출")}
+  ${spectator ? "" : `<div class="tools one">
+    <button class="tool" id="t-skip" ${r.skip.includes(M.me) || r.result ? "disabled" : ""}>넘어가기<small>둘 다 누르면 다음 라운드 · ${r.skip.length}/2</small></button>
+  </div>`}
+  ${doneSheet}`;
+  wire();
+  app.querySelectorAll(".key").forEach(b => b.onclick = () => multiPress(b.dataset.k));
+  app.querySelectorAll("[data-slot]").forEach(b => b.onclick = () => { M.active = b.dataset.slot; M.note = ""; render(); });
+  const sk = document.getElementById("t-skip"); if (sk) sk.onclick = () => send("skip", {});
+  const next = document.getElementById("next"); if (next) { next.onclick = () => send("next", {}); next.focus(); }
+  const list = app.querySelector(".ex"); if (list) list.scrollTop = list.scrollHeight;
+}
+
+function multiSheet(r, rule, st) {
+  const last = st.idx === st.rounds.length - 1;
+  let title, ok;
+  if (r.result === "correct") { ok = r.winner === M.me; title = ok ? "정답!" : `${nameOf(r.winner)} 정답`; }
+  else { ok = false; title = r.result === "skip" ? "넘어갔어요" : "둘 다 기회를 다 썼어요"; }
+  const delta = r.result === "correct" ? `${nameOf(r.winner)} +${r.points}점` : "아무도 점수를 못 얻었어요";
+  const btn = st.players.includes(M.me) ? (last ? "최종 결과 보기" : "다음 라운드") : "";
+  return sheet(title, ok, r, rule, delta, `단서 ${r.clues.length}개`, btn);
+}
+
+function renderMultiEnd(head, wire, spectator) {
+  const st = M.st;
+  const [p0, p1] = st.players;
+  const me = spectator ? p0 : M.me;
+  const opp = me === p0 ? p1 : p0;
+  const a = st.scores[me] ?? 0, b = st.scores[opp] ?? 0;
+  const title = spectator ? (a === b ? "무승부" : `${nameOf(a > b ? me : opp)} 승리`) : a > b ? "승리!" : a < b ? "패배" : "무승부";
+  const rm = st.rematch;
+  app.innerHTML = `
+  ${head()}
+  <section class="hero" style="padding-top:2vh">
+    <h2 class="title-sm">${esc(title)}</h2>
+    <div class="final">
+      <div><span class="who">${esc(nameOf(me))}</span><span class="big">${a}</span></div>
+      <span class="vs">:</span>
+      <div><span class="who">${esc(nameOf(opp))}</span><span class="big">${b}</span></div>
+    </div>
+    <ul class="summary">
+      ${st.rounds.map((r, i) => {
+        const rule = ruleById(r.ruleId);
+        const w = r.result === "correct" ? `${nameOf(r.winner)} +${r.points}` : r.result === "skip" ? "넘어감" : "실패";
+        const cls = r.winner === M.me ? "ok" : r.winner ? "no" : "";
+        return `<li><span class="n">${String(i + 1).padStart(2, "0")}</span><span>${esc(rule.name)}<br><span class="lv">${LEVEL_NAME[r.level]} · 단서 ${r.clues.length}개 · ${r.q[0]} ${sgn(r.sign)} ${r.q[1]} = ${esc(r.answer)}</span></span><span class="p ${cls}">${esc(w)}</span></li>`;
+      }).join("")}
+    </ul>
+    ${spectator ? "" : rm ? (rm.by === M.me ? `<button class="cta" id="go-rm">내가 만든 새 게임으로 가기</button>` : `<button class="cta" id="go-rm">${esc(nameOf(rm.by))}의 새 게임에 참가</button>`) : `<button class="cta" id="again">같은 친구와 한 판 더</button>`}
+    ${M.note ? `<p class="msg bad">${esc(M.note)}</p>` : ""}
+    <button class="ghost" id="home">처음으로</button>
+  </section>`;
+  wire();
+  document.getElementById("home").onclick = leaveGame;
+  const ag = document.getElementById("again"); if (ag) ag.onclick = rematch;
+  const g = document.getElementById("go-rm"); if (g) g.onclick = () => openGame(rm.code);
+}
+
+/* ================= 공통 ================= */
+function render() {
+  if (S.phase === "multi") renderMulti();
+  else if (S.phase === "start") renderStart();
+  else if (S.phase === "end") renderEnd();
+  else renderPlay();
+}
+
+function press(k) {
+  if (S.phase === "multi") return M && multiPress(k);
+  if (S.phase === "play") soloPress(k);
+}
+
+document.addEventListener("keydown", e => {
+  if (e.target && e.target.tagName === "INPUT") return;
+  if (S.phase === "multi") {
+    const st = M && M.st, r = st && st.rounds[st.idx];
+    if (!r) return;
+    if (r.result) { if (e.key === "Enter" && document.getElementById("next")) { e.preventDefault(); send("next", {}); } return; }
+  } else if (S.phase === "play") {
+    if (cur().result) { if (e.key === "Enter") { e.preventDefault(); nextRound(); } return; }
+  } else return;
+  if (/^[0-9]$/.test(e.key)) press(e.key);
+  else if (e.key === "Backspace") press("del");
+  else if (e.key === "Enter") { e.preventDefault(); press("ok"); }
+  else if (e.key === "Tab" && S.phase === "play") { e.preventDefault(); S.active = { a: "b", b: "ans", ans: "a" }[S.active]; render(); }
+  else if (e.key === "Tab" && S.phase === "multi") { e.preventDefault(); M.active = M.active === "ans" && myClueTurn(M.st) ? "clue" : "ans"; render(); }
+});
+
+window.addEventListener("hashchange", () => {
+  const code = parseCode(location.hash);
+  if (code && (!M || M.code !== code)) openGame(code);
+});
+
+function boot(data) {
+  const code = parseCode(location.hash) || (data && data.mcode) || null;
+  if (code) return openGame(code);
+  if (data && data.S && data.S.v === 2 && data.S.phase && data.S.phase !== "multi") S = data.S;
+  render();
+}
+boot({});
+</script>
+</body>
+</html>
