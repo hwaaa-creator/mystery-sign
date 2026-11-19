@@ -503,6 +503,15 @@ const divCount = n => { let c = 0; for (let i = 1; i * i <= n; i++) if (n % i ==
 const commonCount = (a, b) => [...new Set(String(a))].filter(d => String(b).includes(d)).length;
 const romanLen = n => { const th = Math.floor(n / 1000); n %= 1000; const V = [[1000, "M"], [900, "CM"], [500, "D"], [400, "CD"], [100, "C"], [90, "XC"], [50, "L"], [40, "XL"], [10, "X"], [9, "IX"], [5, "V"], [4, "IV"], [1, "I"]]; let s = ""; for (const [v, r] of V) while (n >= v) { s += r; n -= v; } return th + s.length; };
 
+const strikeBall = (a, b) => {
+  const x = String(a), y = String(b); let s = 0; const ca = {}, cb = {};
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    if (x[i] !== undefined && x[i] === y[i]) s++;
+    else { if (x[i] !== undefined) ca[x[i]] = (ca[x[i]] || 0) + 1; if (y[i] !== undefined) cb[y[i]] = (cb[y[i]] || 0) + 1; }
+  }
+  let bl = 0; for (const d in cb) bl += Math.min(cb[d], ca[d] || 0);
+  return [s, bl];
+};
 const RULES = [
   // 쉬움 (1점)
   { id: "add", level: 1, name: "두 수의 합  (A + B)", hint: "가장 기본적인 사칙연산 하나예요.",
@@ -669,6 +678,42 @@ const RULES = [
   { id: "crossLen", level: 3, name: "A × (B의 자릿수) + B × (A의 자릿수)", hint: "두 수의 값과 길이를 서로 엇갈려 곱해요.",
     gen: () => { let a, b; do { a = rand(5, 999); b = rand(5, 999); } while (String(a).length === String(b).length); return [a, b]; },
     f: (a, b) => a * String(b).length + b * String(a).length },
+  // ===== 추가 규칙 (5차): 수열 · 나눗셈 · 숫자야구 등 =====
+  { id: "plus2B", level: 1, name: "A + B × 2", hint: "뒤의 수가 앞의 수보다 두 배 중요해요.",
+    gen: () => { const a = rand(2, 30); let b; do { b = rand(2, 30); } while (b === a); return [a, b]; }, f: (a, b) => a + 2 * b },
+  { id: "minusOneTimes", level: 2, name: "(A − 1) × B", hint: "곱셈인데, 앞의 수가 살짝 모자라요.",
+    gen: () => [rand(3, 15), rand(2, 12)], f: (a, b) => ((BigInt(a) - 1n) * BigInt(b)).toString() },
+  { id: "arith4", level: 2, name: "A에서 시작해 B씩 커지는 수열의 4번째 수 (A, A+B, A+2B, …)", hint: "앞의 수에서 출발해 뒤의 수만큼 몇 번 걸어가 보세요.",
+    gen: () => [rand(1, 20), rand(2, 9)], f: (a, b) => a + 3 * b },
+  { id: "floorMult", level: 2, name: "큰 수를 넘지 않는 작은 수의 배수 중 가장 큰 수", hint: "작은 수를 계속 더해 가다가 큰 수를 넘기 직전에 멈춰요.",
+    gen: () => { let a, b; do { b = rand(3, 9); a = rand(20, 99); } while (a % b === 0); return [a, b]; },
+    f: (a, b) => { const hi = Math.max(a, b), lo = Math.min(a, b); return hi - (hi % lo); } },
+  { id: "fib5", level: 3, name: "A, B로 시작해 앞의 두 수를 더해 가는 수열의 5번째 수 (A, B, A+B, …)", hint: "두 수에서 시작해 '앞의 두 수를 더하기'를 몇 번 반복해 보세요.",
+    gen: () => [rand(1, 9), rand(1, 9)], f: (a, b) => 2 * a + 3 * b },
+  { id: "geo3", level: 3, name: "A에서 시작해 매번 B배가 되는 수열의 3번째 수 (A, A×B, A×B×B)", hint: "앞의 수에서 출발해 뒤의 수를 여러 번 곱해 보세요.",
+    gen: () => [rand(2, 9), rand(2, 6)], f: (a, b) => (BigInt(a) * BigInt(b) * BigInt(b)).toString() },
+  { id: "decimal1", level: 3, name: "A ÷ B의 소수점 아래 첫째 자리 숫자", hint: "나눗셈을 끝까지 해 보세요. 답은 항상 한 자리예요.",
+    gen: () => { let a, b; do { a = rand(10, 99); b = rand(3, 9); } while (a % b === 0); return [a, b]; },
+    f: (a, b) => Math.floor((a % b) * 10 / b) },
+  { id: "lastSum", level: 1, kind: "creative", name: "A의 일의 자리 + B의 일의 자리", hint: "두 수의 끝만 보고 계산해요.",
+    gen: () => [rand(10, 99), rand(10, 99)], f: (a, b) => (a % 10) + (b % 10) },
+  { id: "minuteClock", level: 2, kind: "creative", name: "시계의 분: A분에서 B분이 지나면 몇 분? (0~59)", hint: "답이 60을 넘지 않아요. 매일 보는 물건의 긴 바늘을 떠올려 보세요.",
+    gen: () => { let a, b; do { a = rand(30, 59); b = rand(10, 59); } while (a + b < 60); return [a, b]; }, f: (a, b) => (a + b) % 60 },
+  { id: "sortAsc", level: 2, kind: "creative", name: "두 수의 숫자를 모두 모아 만들 수 있는 가장 작은 수 (0은 맨 앞에 못 옴)", hint: "두 수에 있는 숫자 카드를 모두 모아 다시 늘어놓아 보세요.",
+    gen: () => [rand(100, 999), rand(10, 99)],
+    f: (a, b) => { const d = `${a}${b}`.split("").sort(); const k = d.findIndex(x => x !== "0"); const lead = d.splice(k, 1)[0]; return lead + d.join(""); } },
+  { id: "replaceLast", level: 2, kind: "creative", name: "A의 일의 자리 숫자를 B의 일의 자리 숫자로 바꿔 끼움", hint: "앞의 수 대부분은 그대로예요. 끝만 보세요.",
+    gen: () => { let a, b; do { a = rand(100, 999); b = rand(10, 99); } while (a % 10 === b % 10); return [a, b]; },
+    f: (a, b) => Math.floor(a / 10) * 10 + (b % 10) },
+  { id: "pickDS", level: 2, kind: "creative", name: "각 자리 숫자의 합이 더 큰 쪽의 수 (합이 같으면 큰 수)", hint: "두 수 중 하나가 그대로 답이에요. 크기보다 숫자 구성을 보세요.",
+    gen: () => { let a, b; do { a = rand(10, 999); b = rand(10, 999); } while (ds(a) === ds(b) || (ds(a) > ds(b)) === (a > b)); return [a, b]; },
+    f: (a, b) => (ds(a) > ds(b) ? a : ds(b) > ds(a) ? b : Math.max(a, b)) },
+  { id: "strike", level: 2, kind: "creative", name: "왼쪽부터 맞춰 적었을 때, 같은 자리에 같은 숫자가 있는 개수", hint: "두 수를 왼쪽 끝을 맞춰 위아래로 적어 보세요.",
+    gen: () => { let a, b; do { a = rand(1000, 9999); b = rand(1000, 9999); } while (strikeBall(a, b)[0] === 0); return [a, b]; },
+    f: (a, b) => strikeBall(a, b)[0] },
+  { id: "baseball", level: 3, kind: "creative", name: "숫자야구: 스트라이크(같은 자리 같은 숫자) 개수 뒤에 볼(자리는 다르지만 있는 숫자) 개수를 붙임. 1S 2B → 12, 0S 2B → 2", hint: "숫자야구를 떠올려 보세요. 왼쪽부터 자리를 맞춰요.",
+    gen: () => { const dd = () => { let n; do { n = rand(102, 987); } while (new Set(String(n)).size < 3); return n; }; let a, b, sb; do { a = dd(); b = dd(); sb = strikeBall(a, b); } while (sb[0] + sb[1] === 0 || sb[0] === 3); return [a, b]; },
+    f: (a, b) => { const [s, bl] = strikeBall(a, b); return Number(`${s}${bl}`); } },
 ];
 
 // ===== 큰 수 지원: 단서는 최대 9자리(999,999,999)까지 정확하게 계산 =====
@@ -745,6 +790,62 @@ function makeRound(rule, sign) {
     clues: [], hintShown: false, wrong: 0, doubled: false, result: null, points: 0 };
 }
 
+// ===== 골고루 출제: 비슷한 규칙 묶음(가족) + 최근 판 기록으로 가중치 =====
+const FAMILY = {
+  add: "linear", dblsum: "linear", avg: "linear", twoAplusB: "linear", twoAminusB: "linear",
+  mul: "product", mulPlusSum: "product", mulMinusSum: "product", mulLast: "product", crossLen: "product",
+  sub: "diff", absDiff: "diff",
+  sq: "square", sqSum: "square", sqdiff: "square",
+  mod: "division", quot: "division", quotMod: "division", quotCat: "division",
+  gcd: "divisor", lcm: "divisor", divisors: "divisor",
+  primes: "prime", rangeSum: "range", countDigit: "range",
+  dsProd: "digitsum", digitSumAll: "digitsum", digitProdSum: "digitsum", mulDigitSum: "digitsum", digitalRoot: "digitsum",
+  max: "pick", min: "pick",
+  concat: "concat", sumdiff: "concat", lastDigits: "concat", firstDigits: "concat", interleave: "concat",
+  revSum: "reverse", decoyRev: "reverse", rotate: "reverse", concatRev: "reverse",
+  noCarry: "digitwise", digitMax: "digitwise", digitDiff: "digitwise", caesar: "digitwise",
+  sortDesc: "arrange",
+  oddCount: "digitfilter", evenSum: "digitfilter", biggerCount: "digitfilter",
+  commonDigits: "digitset", distinct: "digitset", keepCommon: "digitset", removeDigits: "digitset",
+  digitLenSum: "length", repeatLen: "length", repeatB: "length", dropLen: "length",
+  loops: "shape", segments: "shape", korean: "reading", english: "reading", roman: "reading",
+  binary: "binary", clock: "clock", lastPow: "power", trailingZeros: "zeros",
+  plus2B: "linear", minusOneTimes: "product", arith4: "sequence", fib5: "sequence", geo3: "sequence",
+  floorMult: "division", decimal1: "division", lastSum: "concat", minuteClock: "clock", sortAsc: "arrange",
+  replaceLast: "swap", pickDS: "pick", strike: "match", baseball: "match",
+};
+const famOf = r => FAMILY[r.id] || r.id;
+const HIST_KEY = "mystery-sign-history";
+const readHist = () => { try { const v = JSON.parse(localStorage.getItem(HIST_KEY) || "[]"); return Array.isArray(v) ? v.filter(Array.isArray) : []; } catch (e) { return []; } };
+const writeHist = h => { try { localStorage.setItem(HIST_KEY, JSON.stringify(h.slice(0, 4))); } catch (e) {} };
+// 최근에 나온 규칙일수록 덜 나오게(0이 되지는 않음): 바로 전 판 ×0.2, 2판 전 ×0.45, 3판 전 ×0.7, 4판 전 ×0.85
+// 같은 가족이 최근에 나왔어도 조금 덜 나오게
+function ruleWeight(r, hist) {
+  let w = 1;
+  const RULE_F = [0.2, 0.45, 0.7, 0.85], FAM_F = [0.6, 0.8, 0.9, 0.95];
+  hist.forEach((ids, i) => {
+    if (ids.includes(r.id)) w *= RULE_F[i] ?? 1;
+    else if (ids.some(id => FAMILY[id] && FAMILY[id] === famOf(r))) w *= FAM_F[i] ?? 1;
+  });
+  return w;
+}
+// 가중치 비복원 추출, 한 판 안에서는 같은 가족을 피함(부족하면 허용)
+function pickSome(list, k, usedFam, hist) {
+  const out = [];
+  let pool = list.slice();
+  while (out.length < k && pool.length) {
+    let cand = pool.filter(r => !usedFam.has(famOf(r)));
+    if (!cand.length) cand = pool;
+    const ws = cand.map(r => ruleWeight(r, hist));
+    let x = Math.random() * ws.reduce((s, w) => s + w, 0), i = 0;
+    while (i < cand.length - 1 && (x -= ws[i]) > 0) i++;
+    const pick = cand[i];
+    out.push(pick); usedFam.add(famOf(pick));
+    pool = pool.filter(r => r !== pick);
+  }
+  return out;
+}
+
 function newGame(know = false) {
   const pool = RULES.filter(r => know || !r.know);
   // 총 7라운드: 난이도별 문제 수는 고정(쉬움 2 · 보통 3 · 어려움 2)
@@ -752,11 +853,13 @@ function newGame(know = false) {
   const LV_TOTAL = { 1: 2, 2: 3, 3: 2 };
   const nCalc = rand(3, 4);
   const calcBy = { 1: 1, 2: nCalc === 4 ? 2 : 1, 3: 1 };
-  const picks = [];
-  for (const lv of [1, 2, 3]) {
-    picks.push(...shuffle(pool.filter(r => r.level === lv && kindOf(r) === "calc")).slice(0, calcBy[lv]));
-    picks.push(...shuffle(pool.filter(r => r.level === lv && kindOf(r) === "creative")).slice(0, LV_TOTAL[lv] - calcBy[lv]));
+  const picks = [], usedFam = new Set(), hist = readHist();
+  // 어려움부터 고르면 선택지가 적은 쪽이 가족 겹침을 덜 겪어요
+  for (const lv of [3, 2, 1]) {
+    picks.push(...pickSome(pool.filter(r => r.level === lv && kindOf(r) === "creative"), LV_TOTAL[lv] - calcBy[lv], usedFam, hist));
+    picks.push(...pickSome(pool.filter(r => r.level === lv && kindOf(r) === "calc"), calcBy[lv], usedFam, hist));
   }
+  writeHist([picks.map(r => r.id), ...hist]);
   const signs = shuffle(SIGNS);
   return shuffle(picks).map((r, i) => makeRound(r, signs[i]));
 }
